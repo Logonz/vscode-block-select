@@ -57,6 +57,8 @@
         ]
     },
     "scripts": {
+        "ext": "vsce package -o vscode-bracket-select.vsix && code --install-extension vscode-bracket-select.vsix",
+        "vsix": "vsce package -o vscode-bracket-select.vsix",
         "vscode:prepublish": "npm run compile",
         "compile": "tsc -p ./",
         "lint": "tslint -p ./",
@@ -68,5 +70,8 @@
         "tslint": "^5.19.0",
         "typescript": "^3.8.3"
     },
-    "dependencies": {}
+    "dependencies": {
+        "global": "^4.4.0",
+        "vsce": "^1.85.1"
+    }
 }
