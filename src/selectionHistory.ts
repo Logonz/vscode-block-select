@@ -7,9 +7,9 @@ function selectionLength(editor: vscode.TextEditor, selection: vscode.Selection)
     return editor.document.offsetAt(selection.end) - editor.document.offsetAt(selection.start);
 }
 
-export function changeSelections(selections: vscode.Selection[]) {
+export function changeSelections(selections: readonly vscode.Selection[]) {
     let editor = vscode.window.activeTextEditor
-    if (selectionHistory.length > 0) {
+    if (editor && selectionHistory.length > 0) {
         //if we can tell that it's a new round of commands, so that will clean the history
         let lasSelections = selectionHistory[selectionHistory.length - 1]
         if (lasSelections.length !== selections.length ||
@@ -20,11 +20,12 @@ export function changeSelections(selections: vscode.Selection[]) {
         }
     }
 
-    let originSelections = editor.selections
-    selectionHistory.push(originSelections)
-    editor.selections = selections
+    if (editor) {
+        let originSelections = editor.selections
+        selectionHistory.push([...originSelections])
+        editor.selections = [...selections]
+    }
 }
-
 export function unDoSelect() {
     let editor = vscode.window.activeTextEditor;
     let lasSelections = selectionHistory.pop()

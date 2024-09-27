@@ -155,15 +155,33 @@ function selectText(includeBrack: boolean, selection: vscode.Selection): { start
 
 //Main extension point
 export function activate(context: vscode.ExtensionContext) {
-    context.subscriptions.push(
-        vscode.commands.registerCommand('bracket-select.select', function () {
-            expandSelection(false);
-        }),
-        vscode.commands.registerCommand('bracket-select.undo-select', history.unDoSelect),
-        vscode.commands.registerCommand('bracket-select.select-include', function () {
-            expandSelection(true);
-        })
-    );
+  // Initial load
+  bracketUtil.refreshConfig();
+
+  // Listen to configuration changes
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((event) => {
+      if (
+        event.affectsConfiguration("block-select.bracketPairs") ||
+        event.affectsConfiguration("block-select.sameBracket")
+      ) {
+        bracketUtil.refreshConfig();
+      }
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("block-select.select", function () {
+      expandSelection(false);
+    }),
+    vscode.commands.registerCommand(
+      "block-select.undo-select",
+      history.unDoSelect
+    ),
+    vscode.commands.registerCommand("block-select.select-include", function () {
+      expandSelection(true);
+    })
+  );
 }
 
 // this method is called when your extension is deactivated

@@ -1,23 +1,75 @@
 # Block Select
-This is a simple plugin that support to quick select text between matched blocks.
-This plugin support `()`, `{}` and `[]`,`""`, `''`, and can not be customized.
-Really hope this plugin can help you!
 
+Block Select is a powerful VS Code extension that allows you to quickly select text between matched blocks. It supports `()`, `{}`, `[]`, `""`, `''`, and ``` `` ```, and can be customized. Unfortunately, angle brackets `<>` are not supported due to RegEx being confused with math operations (e.g., `l < 1`).
 
-## Quick start
-Just run command `BraSel:Select` or type `alt+a` to select text between blocks. If you wish to select more, just press it again.
+## Quick Start
 
-If you slected more than you want, at anytime, just press `alt+z`(undo selection), you will bring the previous selections back.
+- Select text between blocks: Run the command `Block Select:Select` or use the shortcut `Alt+A`.
+- Select text including the blocks: Run the command `Block Select:SelectInclude` or use the shortcut `Ctrl+Alt+A` (Windows) / `Cmd+Alt+A` (Mac).
+- Undo selection: Press `Alt+Z` at any time to revert to the previous selection.
 
-![block-select-animation](block-select-undo.gif)
-  
-If you wish to select text including the blocks, just run `BraSel:Select Include Blocks` or type `cmd+alt+a` on mac and `ctrl+alt+a` on windows.
+This plugin works with multiple cursors!
 
-This plugin is works for **multiple cursors**  now.
 ![block-select-animation](block-select.gif)
 
-## Requirements
-None
+## Features
 
-## Extension Settings
+- Quick selection between matched blocks
+- Support for multiple cursor selections
+- Customizable bracket pairs and same-bracket characters
+- Undo selection functionality
 
+![block-select-undo-animation](block-select-undo.gif)
+
+## Configuration
+
+You can customize the behavior of Block Select through the following settings:
+
+### Bracket Pairs
+
+Define the pairs of brackets to be used for selection:
+
+```json
+"block-select.bracketPairs": [
+    ["(", ")"],
+    ["{", "}"],
+    ["[", "]"]
+]
+```
+#### Same Bracket Characters
+Define characters that act as their own pair:
+```json
+"block-select.sameBracket": [
+    "\"",
+    "'",
+    "`",
+    "/"
+]
+```
+Note: The double quote is escaped for JSON compatibility.
+
+Keybindings
+* `Alt+A`: Select text between blocks
+* `Ctrl+Alt+A` (Windows) / Cmd+Alt+A (Mac): Select text including blocks
+* `Alt+Z`: Undo selection
+
+
+### Installation
+1. Open VS Code
+2. Go to Extensions (Ctrl+Shift+X)
+3. Search for "Block Select"
+4. Click Install
+
+#### Feedback and Contributions
+If you find this extension helpful, please consider leaving a review. For issues, feature requests, or contributions, visit our GitHub repository.
+
+Enjoy quick and efficient text selection with Block Select!
+
+
+### Mentions
+This is shamefully stolen from two abandoned reposisitories:\
+Original code:\
+[wangchunsen/vscode-bracket-select](https://github.com/wangchunsen/vscode-bracket-select)
+
+Configuration code:\
+[FuPeiJiang/vscode-bracket-select](https://github.com/FuPeiJiang/wangchunsen-vscode-bracket-select)
