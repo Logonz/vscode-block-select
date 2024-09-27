@@ -15,10 +15,7 @@
     "categories": [
         "Other"
     ],
-    "activationEvents": [
-        "onCommand:block-select.select",
-        "onCommand:block-select.select-include"
-    ],
+    "activationEvents": [],
     "main": "./out/src/bracketSelectMain",
     "contributes": {
         "commands": [
