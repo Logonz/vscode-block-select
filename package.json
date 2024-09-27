@@ -1,55 +1,55 @@
 {
-    "name": "bracket-select",
-    "displayName": "Bracket Select",
+    "name": "block-select",
+    "displayName": "Block Select",
     "description": "Quick select code between brackets, support for (),{} and [], <>",
-    "version": "2.0.2",
-    "publisher": "chunsen",
+    "version": "2.0.3",
+    "publisher": "Logonz",
     "icon": "icon.png",
     "engines": {
         "vscode": "^1.34.0"
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/wangchunsen/vscode-bracket-select.git"
+        "url": "https://github.com/Logonz/vscode-block-select.git"
     },
     "categories": [
         "Other"
     ],
     "activationEvents": [
-        "onCommand:bracket-select.select",
-        "onCommand:bracket-select.select-include"
+        "onCommand:block-select.select",
+        "onCommand:block-select.select-include"
     ],
     "main": "./out/src/bracketSelectMain",
     "contributes": {
         "commands": [
             {
-                "command": "bracket-select.select",
+                "command": "block-select.select",
                 "title": "BraSel:Select"
             },
             {
-                "command": "bracket-select.undo-select",
+                "command": "block-select.undo-select",
                 "title": "BraSel:UndoSelect"
             },
             {
-                "command": "bracket-select.select-include",
+                "command": "block-select.select-include",
                 "title": "BraSel:SelectInclude"
             }
         ],
         "keybindings": [
             {
-                "command": "bracket-select.undo-select",
+                "command": "block-select.undo-select",
                 "key": "alt+z",
                 "mac": "alt+z",
                 "when": "editorTextFocus"
             },
             {
-                "command": "bracket-select.select",
+                "command": "block-select.select",
                 "key": "alt+a",
                 "mac": "alt+a",
                 "when": "editorTextFocus"
             },
             {
-                "command": "bracket-select.select-include",
+                "command": "block-select.select-include",
                 "key": "ctrl+alt+a",
                 "mac": "cmd+alt+a",
                 "when": "editorTextFocus"
@@ -58,7 +58,7 @@
         "configuration": {
             "title": "Bracket Select configuration",
             "properties": {
-                "bracket-select.bracketPairs": {
+                "block-select.bracketPairs": {
                     "type": "array",
                     "default": [
                         [
@@ -75,12 +75,13 @@
                         ]
                     ]
                 },
-                "bracket-select.sameBracket": {
+                "block-select.sameBracket": {
                     "type": "array",
                     "default": [
                         "\"",
                         "'",
-                        "`"
+                        "`",
+                        "/"
                     ],
                     "description": "double quote is escaped for JSON"
                 }
@@ -88,8 +89,8 @@
         }
     },
     "scripts": {
-        "ext": "vsce package -o vscode-bracket-select.vsix && code --install-extension vscode-bracket-select.vsix",
-        "vsix": "vsce package -o vscode-bracket-select.vsix",
+        "ext": "vsce package -o vscode-block-select.vsix && code --install-extension vscode-block-select.vsix",
+        "vsix": "vsce package -o vscode-block-select.vsix",
         "vscode:prepublish": "npm run compile",
         "compile": "tsc -p ./",
         "lint": "tslint -p ./",
@@ -102,7 +103,7 @@
         "typescript": "^3.8.3"
     },
     "dependencies": {
-        "global": "^4.4.0",
-        "vsce": "^1.85.1"
+        "@vscode/vsce": "^3.1.0",
+        "global": "^4.4.0"
     }
 }
