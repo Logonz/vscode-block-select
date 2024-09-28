@@ -1,4 +1,4 @@
 {
-  "printWidth": 180, // default is 80
-  "tabWidth": 2, // default is 2
+  "printWidth": 180,
+  "tabWidth": 2
 }
