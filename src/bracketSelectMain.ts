@@ -74,7 +74,8 @@ function findForward(text: string, index: number): SearchResult | null {
         let top = bracketStack.pop();
         if (!bracketUtil.isMatch(top, char)) {
           console.log("Mismatched brackets:", top, char);
-          throw new Error("Unmatched bracket pair");
+          // This should never be enabled on a release, but it is a good debug tool - keeping it.
+          // throw new Error("Unmatched bracket pair");
         }
       }
     } else if (bracketUtil.isOpenBracket(char)) {
@@ -85,9 +86,6 @@ function findForward(text: string, index: number): SearchResult | null {
   return null;
 }
 
-function showInfo(msg: string): void {
-  vscode.window.showInformationMessage(msg);
-}
 
 function getSearchContext(selection: vscode.Selection) {
   const editor = vscode.window.activeTextEditor;
