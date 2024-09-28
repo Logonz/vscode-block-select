@@ -18,7 +18,7 @@ export class TreeSitterUtil {
     this.languageMap.set("html", Html);
     this.languageMap.set("javascript", JavaScript);
     this.languageMap.set("typescript", typescript.typescript);
-    this.languageMap.set("tsx", typescript.tsx);
+    this.languageMap.set("typescriptreact", typescript.tsx);
     // Add other languages here
   }
 
