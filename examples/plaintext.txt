@@ -1,0 +1,10 @@
+Very good test file, wow.
+test "hello"
+
+(asdf)
+
+[asdf]
+
+((asdf))
+
+{{{ffff}fff}ff}
