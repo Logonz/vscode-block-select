@@ -1,7 +1,6 @@
 // bracketSelectMain.ts
 "use strict";
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
+
 import * as vscode from "vscode";
 import { bracketUtil } from "./bracketUtil";
 import * as history from "./selectionHistory";
@@ -20,55 +19,69 @@ class SearchResult {
   }
 }
 
-function findBackward(text: string, index: number): SearchResult {
+/**
+ * Attempts to find a matching bracket backward using the default method.
+ * @param text The entire text
+ * @param index The starting index to search backward from
+ * @returns A SearchResult or null
+ */
+function findBackward(text: string, index: number): SearchResult | null {
   console.log("findBackward called with index:", index);
   const bracketStack: string[] = [];
   for (let i = index; i >= 0; i--) {
     let char = text.charAt(i);
-    // if it's a quote, we can not infer it is a open or close one
-    //so just return, this is for the case current selection is inside a string;
-    if (bracketUtil.isSameBracket(char) && bracketStack.length == 0) {
+    // Handle same brackets (e.g., quotes)
+    if (bracketUtil.isSameBracket(char) && bracketStack.length === 0) {
       return new SearchResult(char, i);
     }
     if (bracketUtil.isOpenBracket(char)) {
-      if (bracketStack.length == 0) {
+      if (bracketStack.length === 0) {
         return new SearchResult(char, i);
       } else {
         let top = bracketStack.pop();
         if (!bracketUtil.isMatch(char, top)) {
           console.log("Mismatched brackets:", char, top);
-          // throw 'Unmatched bracket pair';
+          // Optionally, handle mismatched brackets gracefully
         }
       }
     } else if (bracketUtil.isCloseBracket(char)) {
       bracketStack.push(char);
     }
   }
-  //we are geting to the edge
+  // Reached the beginning without finding a match
   return null;
 }
 
-function findForward(text: string, index: number): SearchResult {
+/**
+ * Attempts to find a matching bracket forward using the default method.
+ * @param text The entire text
+ * @param index The starting index to search forward from
+ * @returns A SearchResult or null
+ */
+function findForward(text: string, index: number): SearchResult | null {
   console.log("findForward called with index:", index);
   const bracketStack: string[] = [];
   for (let i = index; i < text.length; i++) {
     let char = text.charAt(i);
-    if (bracketUtil.isSameBracket(char) && bracketStack.length == 0) {
+    // Handle same brackets (e.g., quotes)
+    if (bracketUtil.isSameBracket(char) && bracketStack.length === 0) {
       return new SearchResult(char, i);
     }
     if (bracketUtil.isCloseBracket(char)) {
-      if (bracketStack.length == 0) {
+      if (bracketStack.length === 0) {
         return new SearchResult(char, i);
       } else {
         let top = bracketStack.pop();
         if (!bracketUtil.isMatch(top, char)) {
-          throw "Unmatched bracket pair";
+          console.log("Mismatched brackets:", top, char);
+          throw new Error("Unmatched bracket pair");
         }
       }
     } else if (bracketUtil.isOpenBracket(char)) {
       bracketStack.push(char);
     }
   }
+  // Reached the end without finding a match
   return null;
 }
 
@@ -81,7 +94,7 @@ function getSearchContext(selection: vscode.Selection) {
   let selectionStart = editor.document.offsetAt(selection.start);
   let selectionEnd = editor.document.offsetAt(selection.end);
   return {
-    backwardStarter: selectionStart - 1, //coverage vscode selection index to text index
+    backwardStarter: selectionStart - 1, // Coverage VS Code selection index to text index
     forwardStarter: selectionEnd,
     text: editor.document.getText(),
   };
@@ -90,7 +103,7 @@ function getSearchContext(selection: vscode.Selection) {
 function toVscodeSelection({ start, end }: { start: number; end: number }): vscode.Selection {
   const editor = vscode.window.activeTextEditor;
   return new vscode.Selection(
-    editor.document.positionAt(start + 1), //convert text index to vs selection index
+    editor.document.positionAt(start + 1), // Convert text index to VS Code selection index
     editor.document.positionAt(end)
   );
 }
@@ -122,6 +135,17 @@ function selectText(includeBrack: boolean, selection: vscode.Selection): { start
   }
 
   let selectionStart: number, selectionEnd: number;
+
+  // Attempt Tree-sitter based selection first
+  const treeSitterSelection = selectWithTreeSitter(selection);
+  if (treeSitterSelection) {
+    return {
+      start: treeSitterSelection.start - 1,
+      end: treeSitterSelection.end,
+    };
+  }
+
+  // Fall back to default bracket selection
   var backwardResult = findBackward(searchContext.text, searchContext.backwardStarter);
   var forwardResult = findForward(searchContext.text, searchContext.forwardStarter);
 
@@ -132,47 +156,39 @@ function selectText(includeBrack: boolean, selection: vscode.Selection): { start
     backwardResult = findBackward(searchContext.text, backwardResult.offset - 1);
   }
 
-  // Attempt Tree-sitter based tag block selection
-  const tagBlock = selectTagBlock(selection);
-  if (tagBlock) {
+  if (isMatch(backwardResult, forwardResult)) {
+    // Perform standard bracket selection
+    if (backwardStarter === backwardResult.offset && forwardResult.offset === forwardStarter) {
+      selectionStart = backwardStarter - 1;
+      selectionEnd = forwardStarter + 1;
+    } else {
+      if (includeBrack) {
+        selectionStart = backwardResult.offset - 1;
+        selectionEnd = forwardResult.offset + 1;
+      } else {
+        selectionStart = backwardResult.offset;
+        selectionEnd = forwardResult.offset;
+      }
+    }
+
     return {
-      start: tagBlock.start - 1,
-      end: tagBlock.end,
+      start: selectionStart,
+      end: selectionEnd,
     };
   }
 
-  if (!isMatch(backwardResult, forwardResult)) {
-    // showInfo('No matched bracket pairs found');
-    console.log("No matched bracket pairs found");
-    return;
-  }
-
-  // Calculate selection boundaries based on bracket lengths
-  if (backwardStarter === backwardResult.offset && forwardResult.offset === forwardStarter) {
-    selectionStart = backwardStarter - 1;
-    selectionEnd = forwardStarter + 1;
-  } else {
-    if (includeBrack) {
-      selectionStart = backwardResult.offset - 1;
-      selectionEnd = forwardResult.offset + 1;
-    } else {
-      selectionStart = backwardResult.offset;
-      selectionEnd = forwardResult.offset;
-    }
-  }
-  return {
-    start: selectionStart,
-    end: selectionEnd,
-  };
+  // No selection found
+  console.log("No matched bracket pairs found");
+  return;
 }
 
 /**
- * Selects the entire tag block (e.g., <test>hej</test>) using Tree-sitter.
+ * Attempts to select using Tree-sitter for both regular and multi-character brackets.
  * @param selection The current VS Code selection
- * @returns An object containing the start and end indices of the tag block, or undefined if not found
+ * @returns An object containing the start and end indices of the selection, or undefined if not found
  */
-function selectTagBlock(selection: vscode.Selection): { start: number; end: number } | undefined {
-  console.log("Entering selectTagBlock function");
+function selectWithTreeSitter(selection: vscode.Selection): { start: number; end: number } | undefined {
+  console.log("Entering selectWithTreeSitter function");
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
     console.log("No active editor found");
@@ -193,82 +209,83 @@ function selectTagBlock(selection: vscode.Selection): { start: number; end: numb
   const node = tree.rootNode.descendantForIndex(offset);
   console.log("Initial node:", node.type);
 
-  // Traverse up to find the enclosing element node
-  let current = node;
-  while (current) {
-    console.log("Traversing node:", current.type);
-    if (isElementNode(current, languageId)) {
-      console.log("Element node found:", current.type);
-      break;
-    }
-    current = current.parent;
+  // Attempt to find matching brackets using Tree-sitter
+  const matchingBracketNode = treeSitterUtil.findMatchingBracket(tree, offset);
+  if (matchingBracketNode) {
+    console.log("Matching bracket node found:", matchingBracketNode.type, matchingBracketNode.startIndex, "-", matchingBracketNode.endIndex);
+    return {
+      start: matchingBracketNode.startIndex,
+      end: matchingBracketNode.endIndex,
+    };
   }
 
-  if (current && isElementNode(current, languageId)) {
-    const startOffset = current.startIndex;
-    const endOffset = current.endIndex;
-    console.log("Element node range:", startOffset, "-", endOffset);
-    return { start: startOffset, end: endOffset };
+  // Attempt to find enclosing element for multi-character brackets
+  const enclosingElement = treeSitterUtil.findEnclosingElement(tree, offset);
+  if (enclosingElement) {
+    console.log("Enclosing element found:", enclosingElement.type, enclosingElement.startIndex, "-", enclosingElement.endIndex);
+    return {
+      start: enclosingElement.startIndex,
+      end: enclosingElement.endIndex,
+    };
   }
 
-  console.log("No suitable element node found");
+  console.log("No Tree-sitter based selection found");
   return undefined;
 }
+
 /**
- * Determines if a Tree-sitter node is an element (tag) node.
- * Adjust this function based on the grammar's node types.
- * @param node The Tree-sitter node
- * @param languageId The language ID
- * @returns True if it's an element node, false otherwise
+ * Selects the entire tag block (e.g., <test>hej</test>) using Tree-sitter.
+ * @param selection The current VS Code selection
+ * @returns An object containing the start and end indices of the tag block, or undefined if not found
  */
-function isElementNode(node: Parser.SyntaxNode, languageId: string): boolean {
-  // Adjust node types based on the language grammar
-  switch (languageId) {
-    case "html":
-      return node.type === "element" || node.type === "self_closing_element";
-    case "typescript":
-      // TODO: Check what the tags in like Vue and React might be called
-      return false;
-    case "javascript":
-      // For JavaScript, you might not have HTML-like tags
-      // Adjust accordingly or return false
-      // TODO: Check what the tags in like Vue and React might be called
-      return false;
-    // Add cases for other languages as needed
-    default:
-      return false;
-  }
+function selectTagBlock(selection: vscode.Selection): { start: number; end: number } | undefined {
+  // Deprecated in favor of selectWithTreeSitter
+  return undefined;
 }
 
 //Main extension point
 export function activate(context: vscode.ExtensionContext) {
+  console.log("Extension 'block-select' is now active!");
   // Initial load
+  console.log("Refreshing config...");
   bracketUtil.refreshConfig();
+  console.log("Config refreshed");
 
-  // Listen to configuration changes
+  // Listen for configuration changes
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
+      console.log("Configuration changed");
       if (event.affectsConfiguration("block-select.bracketPairs") || event.affectsConfiguration("block-select.sameBracket")) {
+        console.log("Refreshing config due to relevant changes");
         bracketUtil.refreshConfig();
       }
     })
   );
 
   // Register commands
+  console.log("Registering commands...");
   context.subscriptions.push(
     vscode.commands.registerCommand("block-select.select", function () {
+      console.log("Executing block-select.select command");
       expandSelection(false);
     }),
-    vscode.commands.registerCommand("block-select.undo-select", history.unDoSelect),
+    vscode.commands.registerCommand("block-select.undo-select", function () {
+      console.log("Executing block-select.undo-select command");
+      history.unDoSelect();
+    }),
     vscode.commands.registerCommand("block-select.select-include", function () {
+      console.log("Executing block-select.select-include command");
       expandSelection(true);
     })
   );
+  console.log("Commands registered");
 
   // Listen for language changes to update Tree-sitter's parser language
   vscode.window.onDidChangeActiveTextEditor((editor) => {
+    console.log("Active text editor changed");
     if (editor) {
       const languageId = editor.document.languageId;
+      console.log(`Setting Tree-sitter language to: ${languageId}`);
       treeSitterUtil.setLanguage(languageId);
     }
   });
@@ -277,9 +294,15 @@ export function activate(context: vscode.ExtensionContext) {
   const editor = vscode.window.activeTextEditor;
   if (editor) {
     const languageId = editor.document.languageId;
+    console.log(`Initializing Tree-sitter with language: ${languageId}`);
     treeSitterUtil.setLanguage(languageId);
+  } else {
+    console.log("No active text editor on activation");
   }
+
+  console.log("Extension activation completed");
 }
+
 
 // this method is called when your extension is deactivated
 export function deactivate() {}
