@@ -54,6 +54,29 @@ export function changeSelections(selections: readonly vscode.Selection[]) {
   console.log("Exiting changeSelections function");
 }
 
+/**
+ * Retrieves the last set of selections from the history.
+ * @returns The last selections or null if history is empty
+ */
+export function getLastSelections(): vscode.Selection[] | null {
+  // Check if the selection history exists and has selections
+  if (!selectionHistory || selectionHistory.length === 0) {
+    return null;
+  }
+
+  const lastSelections = selectionHistory[selectionHistory.length - 1];
+  // Ensure valid selections are returned
+  if (!lastSelections || lastSelections.length === 0) {
+    console.warn("No selections available in the history.");
+    return null;
+  }
+
+  return lastSelections;
+}
+
+/**
+ * Removes the last set of selections from the history and applies it to the editor.
+ */
 export function unDoSelect() {
   let editor = vscode.window.activeTextEditor;
   let lastSelections = selectionHistory.pop();

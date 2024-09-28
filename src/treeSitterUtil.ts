@@ -70,119 +70,63 @@ export class TreeSitterUtil {
   }
 
   /**
-   * Finds the matching bracket node for a given position.
+   * Finds the smallest enclosing syntax node that represents a bracketed expression.
    * @param tree The syntax tree
    * @param position The offset position in the text
-   * @returns The matching bracket node or null
+   * @returns The enclosing syntax node or null
    */
-  findMatchingBracket(tree: Parser.Tree, position: number): Parser.SyntaxNode | null {
-    const node = tree.rootNode.descendantForIndex(position);
-    if (!node) return null;
-
-    // Determine if the node is an opening or closing bracket
-    const currentChar = node.text;
-    const brackets = ["(", ")", "{", "}", "[", "]", "<", ">"];
-    if (!brackets.includes(currentChar)) return null;
-
-    // Simple approach: use a stack to find the matching bracket
-    const text = tree.rootNode.text;
-    const isOpening = ["(", "{", "[", "<"].includes(currentChar);
-    const stack: number[] = [];
-    if (isOpening) {
-      for (let i = node.startIndex; i < text.length; i++) {
-        const char = text[i];
-        if (["(", "{", "[", "<"].includes(char)) {
-          stack.push(i);
-        } else if ([")", "}", "]", ">"].includes(char)) {
-          const last = stack.pop();
-          if (last === node.startIndex) {
-            return tree.rootNode.descendantForIndex(i);
-          }
-        }
+  findEnclosingBracketedNode(tree: Parser.Tree, position: number): Parser.SyntaxNode | null {
+    let node = tree.rootNode.descendantForIndex(position);
+    while (node) {
+      if (this.isBracketedNode(node, this.getLanguageId(tree))) {
+        return node;
       }
-    } else {
-      for (let i = node.startIndex; i >= 0; i--) {
-        const char = text[i];
-        if ([")", "}", "]", ">"].includes(char)) {
-          stack.push(i);
-        } else if (["(", "{", "[", "<"].includes(char)) {
-          const last = stack.pop();
-          if (last === node.startIndex) {
-            return tree.rootNode.descendantForIndex(i);
-          }
-        }
-      }
+      node = node.parent;
     }
-
     return null;
   }
 
   /**
-   * Finds the innermost element node enclosing the given position.
-   * @param tree The syntax tree
-   * @param position The offset position in the text
-   * @returns The enclosing element node or null
-   */
-  findEnclosingElement(tree: Parser.Tree, position: number): Parser.SyntaxNode | null {
-    const node = tree.rootNode.descendantForIndex(position);
-    if (!node) return null;
-
-    // Traverse up the tree to find the smallest enclosing element node
-    let current = node;
-    while (current) {
-      if (this.isElementNode(current, this.getLanguageId(tree))) {
-        return current;
-      }
-      current = current.parent;
-    }
-
-    return null;
-  }
-
-  /**
-   * Determines if a Tree-sitter node is an element (tag) node.
+   * Determines if a Tree-sitter node represents a bracketed expression.
    * Adjust this function based on the grammar's node types.
    * @param node The Tree-sitter node
    * @param languageId The language ID
-   * @returns True if it's an element node, false otherwise
+   * @returns True if it's a bracketed node, false otherwise
    */
-  isElementNode(node: Parser.SyntaxNode, languageId: string): boolean {
+  isBracketedNode(node: Parser.SyntaxNode, languageId: string): boolean {
     switch (languageId) {
       case "html":
-        return node.type === "element" || node.type === "self_closing_element";
+        return node.type === "parenthesized_expression" || node.type === "block";
       case "javascript":
       case "typescript":
       case "tsx":
-        return node.type === "jsx_element" || node.type === "jsx_self_closing_element";
+        return node.type === "parenthesized_expression" || node.type === "block";
       case "python":
+        return node.type === "parenthesized_expression" || node.type === "block";
       case "cpp":
       case "go":
+      case "java":
+      case "csharp":
       case "c":
       case "rust":
-        // These languages don't have tag-like syntax
-        return false;
-      case "java":
-        // Java doesn't have element nodes like HTML
-        return false;
-      case "csharp":
-        // C# doesn't have element nodes like HTML
-        return false;
       case "php":
-        return node.type === "element" || node.type === "self_closing_element";
       case "ruby":
-        // Ruby doesn't have element nodes like HTML
-        return false;
       case "kotlin":
-        // Kotlin doesn't have element nodes like HTML
-        return false;
       case "lua":
-        // Lua doesn't have element nodes like HTML
+        // Define what constitutes a bracketed node in these languages
+        // For example, in C-like languages, blocks are typically "compound_statement"
+        if (languageId === "cpp" || languageId === "c" || languageId === "csharp" || languageId === "java" || languageId === "rust") {
+          return node.type === "compound_statement";
+        }
+        if (languageId === "go" || languageId === "php" || languageId === "ruby" || languageId === "kotlin" || languageId === "lua") {
+          return node.type === "block";
+        }
+        // Add other languages' bracketed node types as needed
         return false;
       default:
         return false;
     }
   }
-
   /**
    * Retrieves the language ID from the syntax tree.
    * @param tree The syntax tree
@@ -191,7 +135,6 @@ export class TreeSitterUtil {
   getLanguageId(tree: Parser.Tree): string {
     // This method assumes that the parser's language is set based on languageId
     // Modify this if you have a different mapping strategy
-    console.log(this.parser.getLanguage());
     return (this.parser.getLanguage().name || "html").toLowerCase();
   }
 }

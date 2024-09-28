@@ -73,8 +73,7 @@ function findForward(text: string, index: number): SearchResult | null {
       } else {
         let top = bracketStack.pop();
         if (!bracketUtil.isMatch(top, char)) {
-          console.log("Mismatched brackets:", top, char);
-          throw new Error("Unmatched bracket pair");
+          console.warn("Mismatched brackets:", top, char);
         }
       }
     } else if (bracketUtil.isOpenBracket(char)) {
@@ -209,37 +208,48 @@ function selectWithTreeSitter(selection: vscode.Selection): { start: number; end
   const node = tree.rootNode.descendantForIndex(offset);
   console.log("Initial node:", node.type);
 
-  // Attempt to find matching brackets using Tree-sitter
-  const matchingBracketNode = treeSitterUtil.findMatchingBracket(tree, offset);
-  if (matchingBracketNode) {
-    console.log("Matching bracket node found:", matchingBracketNode.type, matchingBracketNode.startIndex, "-", matchingBracketNode.endIndex);
-    return {
-      start: matchingBracketNode.startIndex,
-      end: matchingBracketNode.endIndex,
-    };
+  // Check if the current selection is already part of a bracketed node
+  const previousSelections = history.getLastSelections();
+  if (previousSelections && previousSelections.length > 0) {
+    const lastSelection = previousSelections[0]; // Ensure we access the first selection
+    if (!lastSelection) {
+      console.warn("No previous selection found in history.");
+      return undefined;
+    }
+
+    // If the current selection matches the last selection, attempt to select the enclosing node
+    if (
+      selection.start.character === lastSelection.start.character &&
+      selection.start.line === lastSelection.start.line &&
+      selection.end.character === lastSelection.end.character &&
+      selection.end.line === lastSelection.end.line
+    ) {
+      // Attempt to find the smallest enclosing bracketed node
+      const enclosingNode = treeSitterUtil.findEnclosingBracketedNode(tree, offset);
+      if (!enclosingNode) {
+        console.warn("No enclosing node found. Returning undefined.");
+        return undefined; // Handle missing enclosing node gracefully
+      }
+
+      console.log("Enclosing bracketed node found:", enclosingNode.type, enclosingNode.startIndex, "-", enclosingNode.endIndex);
+      return {
+        start: enclosingNode.startIndex,
+        end: enclosingNode.endIndex,
+      };
+    }
   }
 
-  // Attempt to find enclosing element for multi-character brackets
-  const enclosingElement = treeSitterUtil.findEnclosingElement(tree, offset);
-  if (enclosingElement) {
-    console.log("Enclosing element found:", enclosingElement.type, enclosingElement.startIndex, "-", enclosingElement.endIndex);
+  // Attempt to find the smallest enclosing bracketed node
+  const enclosingNode = treeSitterUtil.findEnclosingBracketedNode(tree, offset);
+  if (enclosingNode) {
+    console.log("Enclosing bracketed node found:", enclosingNode.type, enclosingNode.startIndex, "-", enclosingNode.endIndex);
     return {
-      start: enclosingElement.startIndex,
-      end: enclosingElement.endIndex,
+      start: enclosingNode.startIndex,
+      end: enclosingNode.endIndex,
     };
   }
 
   console.log("No Tree-sitter based selection found");
-  return undefined;
-}
-
-/**
- * Selects the entire tag block (e.g., <test>hej</test>) using Tree-sitter.
- * @param selection The current VS Code selection
- * @returns An object containing the start and end indices of the tag block, or undefined if not found
- */
-function selectTagBlock(selection: vscode.Selection): { start: number; end: number } | undefined {
-  // Deprecated in favor of selectWithTreeSitter
   return undefined;
 }
 
@@ -302,7 +312,6 @@ export function activate(context: vscode.ExtensionContext) {
 
   console.log("Extension activation completed");
 }
-
 
 // this method is called when your extension is deactivated
 export function deactivate() {}
