@@ -1,3 +1,4 @@
+// @ts-nocheck
 // App.tsx
 
 import React from "react";
