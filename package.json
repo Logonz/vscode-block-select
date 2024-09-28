@@ -1,8 +1,8 @@
 {
     "name": "block-select",
     "displayName": "Block Select",
-    "description": "Quick select code between brackets, support for (),{} and [], <>",
-    "version": "2.0.3",
+    "description": "Quick select code between brackets, support for (),{} and [], <tags>",
+    "version": "2.1.0",
     "publisher": "Logonz",
     "icon": "icon.png",
     "license": "MIT",
@@ -22,15 +22,15 @@
         "commands": [
             {
                 "command": "block-select.select",
-                "title": "Block Select:Select"
+                "title": "Block Select: Select"
             },
             {
                 "command": "block-select.undo-select",
-                "title": "Block Select:UndoSelect"
+                "title": "Block Select: Undo Select"
             },
             {
                 "command": "block-select.select-include",
-                "title": "Block Select:SelectInclude"
+                "title": "Block Select: Select Include"
             }
         ],
         "keybindings": [
