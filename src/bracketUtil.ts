@@ -3,17 +3,17 @@
 import * as vscode from "vscode";
 
 export namespace bracketUtil {
-    export let bracketPairs: string[][] = vscode.workspace.getConfiguration("block-select").get("bracketPairs") as string[][];
-    export let sameBracket: string[] = vscode.workspace.getConfiguration("block-select").get("sameBracket") as string[];
+  export let bracketPairs: string[][] = vscode.workspace.getConfiguration("block-select").get("bracketPairs") as string[][];
+  export let sameBracket: string[] = vscode.workspace.getConfiguration("block-select").get("sameBracket") as string[];
 
-    /**
-     * Refreshes the bracket pairs and same brackets from the configuration.
-     */
-    export function refreshConfig() {
-      console.log("Refreshing config");
-      bracketPairs = vscode.workspace.getConfiguration("block-select").get("bracketPairs") as string[][];
-      sameBracket = vscode.workspace.getConfiguration("block-select").get("sameBracket") as string[];
-    }
+  /**
+   * Refreshes the bracket pairs and same brackets from the configuration.
+   */
+  export function refreshConfig() {
+    console.log("Refreshing config");
+    bracketPairs = vscode.workspace.getConfiguration("block-select").get("bracketPairs") as string[][];
+    sameBracket = vscode.workspace.getConfiguration("block-select").get("sameBracket") as string[];
+  }
 
   export function isMatch(open: string, close: string): Boolean {
     if (isSameBracket(open)) {

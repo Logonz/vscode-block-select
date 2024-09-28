@@ -70,8 +70,17 @@
                         [
                             "[",
                             "]"
+                        ],
+                        [
+                            "<",
+                            ">"
+                        ],
+                        [
+                          ">",
+                          "<"
                         ]
-                    ]
+                    ],
+                    "description": "Define bracket pairs for selection."
                 },
                 "block-select.sameBracket": {
                     "type": "array",
@@ -81,7 +90,7 @@
                         "`",
                         "/"
                     ],
-                    "description": "double quote is escaped for JSON"
+                    "description": "Characters that are the same for opening and closing brackets (e.g., quotes)."
                 }
             }
         }
@@ -102,6 +111,10 @@
     },
     "dependencies": {
         "@vscode/vsce": "^3.1.0",
-        "global": "^4.4.0"
+        "global": "^4.4.0",
+        "tree-sitter": "^0.21.1",
+        "tree-sitter-html": "^0.23.0",
+        "tree-sitter-javascript": "^0.23.0",
+        "tree-sitter-typescript": "^0.23.0"
     }
 }
