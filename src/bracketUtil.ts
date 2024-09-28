@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 import * as vscode from "vscode";
 
@@ -19,8 +19,7 @@ export namespace bracketUtil {
     if (isSameBracket(open)) {
       return open === close;
     }
-    return (
-      bracketPairs.findIndex((p: string[]) => p[0] === open && p[1] === close) >= 0);
+    return bracketPairs.findIndex((p: string[]) => p[0] === open && p[1] === close) >= 0;
   }
 
   export function isOpenBracket(char: string): Boolean {

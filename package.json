@@ -1,120 +1,120 @@
 {
-    "name": "block-select",
-    "displayName": "Block Select",
-    "description": "Quick select code between brackets, support for (),{} and [], <tags>",
-    "version": "2.1.0",
-    "publisher": "Logonz",
-    "icon": "icon.png",
-    "license": "MIT",
-    "engines": {
-        "vscode": "^1.89.1"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/Logonz/vscode-block-select.git"
-    },
-    "categories": [
-        "Other"
+  "name": "block-select",
+  "displayName": "Block Select",
+  "description": "Quick select code between brackets, support for (),{} and [], <tags>",
+  "version": "2.1.0",
+  "publisher": "Logonz",
+  "icon": "icon.png",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.89.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Logonz/vscode-block-select.git"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/src/bracketSelectMain",
+  "contributes": {
+    "commands": [
+      {
+        "command": "block-select.select",
+        "title": "Block Select: Select"
+      },
+      {
+        "command": "block-select.undo-select",
+        "title": "Block Select: Undo Select"
+      },
+      {
+        "command": "block-select.select-include",
+        "title": "Block Select: Select Include"
+      }
     ],
-    "activationEvents": [],
-    "main": "./out/src/bracketSelectMain",
-    "contributes": {
-        "commands": [
-            {
-                "command": "block-select.select",
-                "title": "Block Select: Select"
-            },
-            {
-                "command": "block-select.undo-select",
-                "title": "Block Select: Undo Select"
-            },
-            {
-                "command": "block-select.select-include",
-                "title": "Block Select: Select Include"
-            }
-        ],
-        "keybindings": [
-            {
-                "command": "block-select.undo-select",
-                "key": "alt+z",
-                "mac": "alt+z",
-                "when": "editorTextFocus"
-            },
-            {
-                "command": "block-select.select",
-                "key": "alt+a",
-                "mac": "alt+a",
-                "when": "editorTextFocus"
-            },
-            {
-                "command": "block-select.select-include",
-                "key": "ctrl+alt+a",
-                "mac": "cmd+alt+a",
-                "when": "editorTextFocus"
-            }
-        ],
-        "configuration": {
-            "title": "Bracket Select configuration",
-            "properties": {
-                "block-select.bracketPairs": {
-                    "type": "array",
-                    "default": [
-                        [
-                            "(",
-                            ")"
-                        ],
-                        [
-                            "{",
-                            "}"
-                        ],
-                        [
-                            "[",
-                            "]"
-                        ],
-                        [
-                            "<",
-                            ">"
-                        ],
-                        [
-                          ">",
-                          "<"
-                        ]
-                    ],
-                    "description": "Define bracket pairs for selection."
-                },
-                "block-select.sameBracket": {
-                    "type": "array",
-                    "default": [
-                        "\"",
-                        "'",
-                        "`",
-                        "/"
-                    ],
-                    "description": "Characters that are the same for opening and closing brackets (e.g., quotes)."
-                }
-            }
+    "keybindings": [
+      {
+        "command": "block-select.undo-select",
+        "key": "alt+z",
+        "mac": "alt+z",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "block-select.select",
+        "key": "alt+a",
+        "mac": "alt+a",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "block-select.select-include",
+        "key": "ctrl+alt+a",
+        "mac": "cmd+alt+a",
+        "when": "editorTextFocus"
+      }
+    ],
+    "configuration": {
+      "title": "Bracket Select configuration",
+      "properties": {
+        "block-select.bracketPairs": {
+          "type": "array",
+          "default": [
+            [
+              "(",
+              ")"
+            ],
+            [
+              "{",
+              "}"
+            ],
+            [
+              "[",
+              "]"
+            ],
+            [
+              "<",
+              ">"
+            ],
+            [
+              ">",
+              "<"
+            ]
+          ],
+          "description": "Define bracket pairs for selection."
+        },
+        "block-select.sameBracket": {
+          "type": "array",
+          "default": [
+            "\"",
+            "'",
+            "`",
+            "/"
+          ],
+          "description": "Characters that are the same for opening and closing brackets (e.g., quotes)."
         }
-    },
-    "scripts": {
-        "ext": "vsce package -o vscode-block-select.vsix && code --install-extension vscode-block-select.vsix",
-        "vsix": "vsce package -o vscode-block-select.vsix",
-        "vscode:prepublish": "npm run compile",
-        "compile": "tsc -p ./",
-        "lint": "tslint -p ./",
-        "watch": "tsc -watch -p ./"
-    },
-    "devDependencies": {
-        "@types/node": "^22.7.4",
-        "@types/vscode": "^1.89.1",
-        "tslint": "^6.1.3",
-        "typescript": "^5.6.2"
-    },
-    "dependencies": {
-        "@vscode/vsce": "^3.1.0",
-        "global": "^4.4.0",
-        "tree-sitter": "^0.21.1",
-        "tree-sitter-html": "^0.23.0",
-        "tree-sitter-javascript": "^0.23.0",
-        "tree-sitter-typescript": "^0.23.0"
+      }
     }
+  },
+  "scripts": {
+    "ext": "vsce package -o vscode-block-select.vsix && code --install-extension vscode-block-select.vsix",
+    "vsix": "vsce package -o vscode-block-select.vsix",
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "lint": "tslint -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.4",
+    "@types/vscode": "^1.89.1",
+    "tslint": "^6.1.3",
+    "typescript": "^5.6.2"
+  },
+  "dependencies": {
+    "@vscode/vsce": "^3.1.0",
+    "global": "^4.4.0",
+    "tree-sitter": "^0.21.1",
+    "tree-sitter-html": "^0.23.0",
+    "tree-sitter-javascript": "^0.23.0",
+    "tree-sitter-typescript": "^0.23.0"
+  }
 }
