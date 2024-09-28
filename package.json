@@ -2,9 +2,9 @@
   "name": "block-select",
   "displayName": "Block Select",
   "description": "Quick select code between brackets, support for (),{} and [], <tags>",
-  "version": "2.1.0",
+  "version": "1.0.0",
   "publisher": "Logonz",
-  "icon": "icon.png",
+  "icon": "icon.jpg",
   "license": "MIT",
   "engines": {
     "vscode": "^1.89.1"
@@ -59,34 +59,21 @@
         "block-select.bracketPairs": {
           "type": "array",
           "default": [
-            [
-              "(",
-              ")"
-            ],
-            [
-              "{",
-              "}"
-            ],
-            [
-              "[",
-              "]"
-            ],
-            [
-              "<",
-              ">"
-            ]
+            [ "(", ")" ],
+            [ "{", "}" ],
+            [ "[", "]" ],
+            [ "<", ">" ]
           ],
-          "description": "Define bracket pairs for selection."
+          "description": "Define bracket pairs for selection. (If your thing isn't a bracket create the tree-sitter implementation for it and create a PR !)"
         },
         "block-select.sameBracket": {
           "type": "array",
           "default": [
             "\"",
             "'",
-            "`",
-            "/"
+            "`"
           ],
-          "description": "Characters that are the same for opening and closing brackets (e.g., quotes)."
+          "description": "Characters that are the same for opening and closing brackets (e.g., quotes).  `\"/\"` and similar formats are supported but can create annoying behavior."
         }
       }
     }
