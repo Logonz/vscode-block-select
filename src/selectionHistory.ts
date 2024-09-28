@@ -6,6 +6,7 @@ let selectionHistory: Array<vscode.Selection[]> = [];
 // Clear history when the active text editor changes
 vscode.window.onDidChangeActiveTextEditor(() => {
   selectionHistory = [];
+  console.log("[selectionHistory] Cleared selection history due to editor change.");
 });
 
 /**
@@ -23,35 +24,35 @@ function selectionLength(editor: vscode.TextEditor, selection: vscode.Selection)
  * @param selections The new selections to apply
  */
 export function changeSelections(selections: readonly vscode.Selection[]) {
-  console.log("Entering changeSelections function");
-  console.log("New selections:", JSON.stringify(selections));
+  console.log("[selectionHistory] Entering changeSelections function.");
+  console.log("[selectionHistory] New selections:", JSON.stringify(selections));
 
   let editor = vscode.window.activeTextEditor;
   if (editor && selectionHistory.length > 0) {
-    console.log("Current selection history length:", selectionHistory.length);
+    console.log("[selectionHistory] Current selection history length:", selectionHistory.length);
 
     let lastSelections = selectionHistory[selectionHistory.length - 1];
-    console.log("Last selections:", JSON.stringify(lastSelections));
+    console.log("[selectionHistory] Last selections:", JSON.stringify(lastSelections));
 
     if (lastSelections.length !== selections.length || lastSelections.findIndex((s, i) => selectionLength(editor, s) > selectionLength(editor, selections[i])) >= 0) {
-      console.log("Clearing selection history");
+      console.log("[selectionHistory] Clearing selection history due to size mismatch or longer selection.");
       selectionHistory = [];
     }
   }
 
   if (editor) {
     let originSelections = editor.selections;
-    console.log("Original selections:", JSON.stringify(originSelections));
+    console.log("[selectionHistory] Pushing new selection into history:", JSON.stringify(originSelections));
 
     selectionHistory.push([...originSelections]);
-    console.log("Updated selection history length:", selectionHistory.length);
-    console.log("Updated selection history:", JSON.stringify(selectionHistory));
+    console.log("[selectionHistory] Updated selection history length:", selectionHistory.length);
+    console.log("[selectionHistory] Updated selection history:", JSON.stringify(selectionHistory));
 
     editor.selections = [...selections];
-    console.log("New editor selections set");
+    console.log("[selectionHistory] New editor selections set.");
   }
 
-  console.log("Exiting changeSelections function");
+  console.log("[selectionHistory] Exiting changeSelections function.");
 }
 
 /**
@@ -67,7 +68,7 @@ export function getLastSelections(): vscode.Selection[] | null {
   const lastSelections = selectionHistory[selectionHistory.length - 1];
   // Ensure valid selections are returned
   if (!lastSelections || lastSelections.length === 0) {
-    console.warn("No selections available in the history.");
+    console.warn("[selectionHistory] No selections available in the history.");
     return null;
   }
 
@@ -82,5 +83,8 @@ export function unDoSelect() {
   let lastSelections = selectionHistory.pop();
   if (lastSelections && editor) {
     editor.selections = lastSelections;
+    console.log("[selectionHistory] Undo selection applied.");
+  } else {
+    console.log("[selectionHistory] No selections to undo.");
   }
 }

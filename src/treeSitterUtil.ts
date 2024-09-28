@@ -41,8 +41,13 @@ export class TreeSitterUtil {
     this.languageMap.set("php", Php.php);
     this.languageMap.set("ruby", Ruby);
     this.languageMap.set("kotlin", Kotlin);
+    // TODO: Fix the languages, lua for example haven't got any brackets
     this.languageMap.set("lua", Lua);
     // Add other languages here
+  }
+  
+  isLanguageSupported(languageId: string): boolean {
+    return this.languageMap.has(languageId);
   }
 
   /**
@@ -78,7 +83,9 @@ export class TreeSitterUtil {
   findEnclosingBracketedNode(tree: Parser.Tree, position: number): Parser.SyntaxNode | null {
     let node = tree.rootNode.descendantForIndex(position);
     while (node) {
+      console.log(`[findEnclosingBracketedNode] Checking node type: ${node.type}`);
       if (this.isBracketedNode(node, this.getLanguageId(tree))) {
+        console.log(`[findEnclosingBracketedNode] Found bracketed node: ${node.type} (${node.startIndex}, ${node.endIndex})`);
         return node;
       }
       node = node.parent;
@@ -96,33 +103,18 @@ export class TreeSitterUtil {
   isBracketedNode(node: Parser.SyntaxNode, languageId: string): boolean {
     switch (languageId) {
       case "html":
-        return node.type === "parenthesized_expression" || node.type === "block";
+        return node.type === "element" || node.type === "self_closing_element" || node.type === "text";
       case "javascript":
       case "typescript":
       case "tsx":
-        return node.type === "parenthesized_expression" || node.type === "block";
+        return node.type === "jsx_element" || node.type === "jsx_self_closing_element" || node.type === "string";
       case "python":
-        return node.type === "parenthesized_expression" || node.type === "block";
-      case "cpp":
-      case "go":
-      case "java":
-      case "csharp":
-      case "c":
-      case "rust":
+        return node.type === "parenthesized_expression" || node.type === "block" || node.type === "string";
       case "php":
-      case "ruby":
-      case "kotlin":
+        return node.type === "element" || node.type === "self_closing_element" || node.type === "text";
+      // Add additional languages if necessary
       case "lua":
-        // Define what constitutes a bracketed node in these languages
-        // For example, in C-like languages, blocks are typically "compound_statement"
-        if (languageId === "cpp" || languageId === "c" || languageId === "csharp" || languageId === "java" || languageId === "rust") {
-          return node.type === "compound_statement";
-        }
-        if (languageId === "go" || languageId === "php" || languageId === "ruby" || languageId === "kotlin" || languageId === "lua") {
-          return node.type === "block";
-        }
-        // Add other languages' bracketed node types as needed
-        return false;
+        return node.type === "string"; // Add Lua's string node
       default:
         return false;
     }
