@@ -2,7 +2,7 @@
   "name": "block-select",
   "displayName": "Block Select",
   "description": "Quick select code between brackets, support for (),{} and [], <tags>",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "Logonz",
   "icon": "icon.jpg",
   "license": "MIT",
@@ -59,10 +59,22 @@
         "block-select.bracketPairs": {
           "type": "array",
           "default": [
-            [ "(", ")" ],
-            [ "{", "}" ],
-            [ "[", "]" ],
-            [ "<", ">" ]
+            [
+              "(",
+              ")"
+            ],
+            [
+              "{",
+              "}"
+            ],
+            [
+              "[",
+              "]"
+            ],
+            [
+              "<",
+              ">"
+            ]
           ],
           "description": "Define bracket pairs for selection. (If your thing isn't a bracket create the tree-sitter implementation for it and create a PR !)"
         },
@@ -81,10 +93,13 @@
   "scripts": {
     "ext": "vsce package -o vscode-block-select.vsix && code --install-extension vscode-block-select.vsix",
     "vsix": "vsce package -o vscode-block-select.vsix",
-    "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "lint": "tslint -p ./",
-    "watch": "tsc -watch -p ./"
+    "check-types": "tsc --noEmit",
+    "watch": "tsc -watch -p ./",
+    "vscode:prepublish-package": "npm run package",
+    "vscode:prepublish": "npm run compile",
+    "package": "npm run check-types && node esbuild.js --production"
   },
   "devDependencies": {
     "@types/node": "^22.7.4",
