@@ -20,7 +20,7 @@ const Php = require("tree-sitter-php");
 import Ruby from "tree-sitter-ruby";
 import Kotlin from "tree-sitter-kotlin";
 
-// Import other languages as needed
+// * Handlers
 
 export class TreeSitterUtil {
   private parser: Parser;
@@ -50,6 +50,7 @@ export class TreeSitterUtil {
     // Add other languages here
   }
   
+  // TODO: This should probably  be depricated
   isLanguageSupported(languageId: string): boolean {
     return this.languageMap.has(languageId);
   }
@@ -84,18 +85,18 @@ export class TreeSitterUtil {
    * @param position The offset position in the text
    * @returns The enclosing syntax node or null
    */
-  findEnclosingBracketedNode(tree: Parser.Tree, position: number): Parser.SyntaxNode | null {
-    let node = tree.rootNode.descendantForIndex(position);
-    while (node) {
-      console.log(`[findEnclosingBracketedNode] Checking node type: ${node.type}`);
-      if (this.isBracketedNode(node, this.getLanguageId(tree))) {
-        console.log(`[findEnclosingBracketedNode] Found bracketed node: ${node.type} (${node.startIndex}, ${node.endIndex})`);
-        return node;
-      }
-      node = node.parent;
-    }
-    return null;
-  }
+  // findEnclosingBracketedNode(tree: Parser.Tree, position: number): Parser.SyntaxNode | null {
+  //   let node = tree.rootNode.descendantForIndex(position);
+  //   while (node) {
+  //     console.log(`[findEnclosingBracketedNode] Checking node type: ${node.type}`);
+  //     if (this.isBracketedNode(node, this.getLanguageId(tree))) {
+  //       console.log(`[findEnclosingBracketedNode] Found bracketed node: ${node.type} (${node.startIndex}, ${node.endIndex})`);
+  //       return node;
+  //     }
+  //     node = node.parent;
+  //   }
+  //   return null;
+  // }
 
   /**
    * Determines if a Tree-sitter node represents a bracketed expression.
@@ -104,25 +105,25 @@ export class TreeSitterUtil {
    * @param languageId The language ID
    * @returns True if it's a bracketed node, false otherwise
    */
-  isBracketedNode(node: Parser.SyntaxNode, languageId: string): boolean {
-    switch (languageId) {
-      case "html":
-        return node.type === "element" || node.type === "self_closing_element" || node.type === "text";
-      case "javascript":
-      case "typescript":
-      case "tsx":
-        return node.type === "jsx_element" || node.type === "jsx_self_closing_element" || node.type === "string";
-      case "python":
-        return node.type === "parenthesized_expression" || node.type === "block" || node.type === "string";
-      case "php":
-        return node.type === "element" || node.type === "self_closing_element" || node.type === "text";
-      // Add additional languages if necessary
-      case "lua":
-        return node.type === "string"; // Add Lua's string node
-      default:
-        return false;
-    }
-  }
+  // isBracketedNode(node: Parser.SyntaxNode, languageId: string): boolean {
+  //   switch (languageId) {
+  //     case "html":
+  //       return node.type === "element" || node.type === "self_closing_element" || node.type === "text";
+  //     case "javascript":
+  //     case "typescript":
+  //     case "tsx":
+  //       return node.type === "jsx_element" || node.type === "jsx_self_closing_element" || node.type === "string";
+  //     case "python":
+  //       return node.type === "parenthesized_expression" || node.type === "block" || node.type === "string";
+  //     case "php":
+  //       return node.type === "element" || node.type === "self_closing_element" || node.type === "text";
+  //     // Add additional languages if necessary
+  //     case "lua":
+  //       return node.type === "string"; // Add Lua's string node
+  //     default:
+  //       return false;
+  //   }
+  // }
   /**
    * Retrieves the language ID from the syntax tree.
    * @param tree The syntax tree

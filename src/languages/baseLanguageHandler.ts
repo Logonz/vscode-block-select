@@ -1,5 +1,5 @@
 import Parser from "tree-sitter";
-import { TreeSitterUtil } from "../utils/treeSitterUtil";
+import { TreeSitterUtil } from "../treeSitterUtil";
 import * as vscode from "vscode";
 
 export abstract class BaseLanguageHandler {
@@ -11,10 +11,13 @@ export abstract class BaseLanguageHandler {
 
   abstract isBracketedNode(node: Parser.SyntaxNode): boolean;
 
-  abstract getLanguageId(): string;
+  // abstract getLanguageId(): string;
 
   /**
    * Implement language-specific selection logic
    */
-  abstract selectNode(node: Parser.SyntaxNode): { start: number; end: number } | null;
+  abstract selectNode(
+    node: Parser.SyntaxNode,
+    selection: vscode.Selection
+  ): { start: number; end: number; type: string; openingBracketLength: number; closingBracketLength: number } | null;
 }

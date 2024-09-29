@@ -2,7 +2,7 @@
   "name": "block-select",
   "displayName": "Block Select",
   "description": "Quick select code between brackets, support for (),{} and [], <tags>",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "Logonz",
   "icon": "icon.jpg",
   "license": "MIT",
@@ -17,7 +17,7 @@
     "Other"
   ],
   "activationEvents": [],
-  "main": "./out/extension",
+  "main": "./out/src/bracketSelectMain",
   "contributes": {
     "commands": [
       {
@@ -97,13 +97,13 @@
     "lint": "tslint -p ./",
     "check-types": "tsc --noEmit",
     "watch": "tsc -watch -p ./",
-    "vscode:prepublish": "npm run package",
+    "vscode:prepublish-package": "npm run package",
+    "vscode:prepublish": "npm run compile",
     "package": "npm run check-types && node esbuild.js --production"
   },
   "devDependencies": {
     "@types/node": "^22.7.4",
     "@types/vscode": "^1.89.1",
-    "esbuild": "^0.24.0",
     "tslint": "^6.1.3",
     "typescript": "^5.6.2"
   },
