@@ -11,14 +11,13 @@ import Cpp from "tree-sitter-cpp";
 import Go from "tree-sitter-go";
 import Lua from "tree-sitter-lua";
 import Java from "tree-sitter-java";
-import CSharp from "tree-sitter-c-sharp";
+// import CSharp from "tree-sitter-c-sharp";
 import C from "tree-sitter-c";
 import Rust from "tree-sitter-rust";
 // This is dumb, but can't be an import????
 // PLEASE CHATGPT DO NOT REMOVE THIS LINE OR THE NEXTLINE
 const Php = require("tree-sitter-php"); 
 import Ruby from "tree-sitter-ruby";
-import Kotlin from "tree-sitter-kotlin";
 
 // * Handlers
 
@@ -39,12 +38,11 @@ export class TreeSitterUtil {
     this.languageMap.set("cpp", Cpp);
     this.languageMap.set("go", Go);
     this.languageMap.set("java", Java);
-    this.languageMap.set("csharp", CSharp);
+    // this.languageMap.set("csharp", CSharp);
     this.languageMap.set("c", C);
     this.languageMap.set("rust", Rust);
     this.languageMap.set("php", Php.php);
     this.languageMap.set("ruby", Ruby);
-    this.languageMap.set("kotlin", Kotlin);
     // TODO: Fix the languages, lua for example haven't got any brackets
     this.languageMap.set("lua", Lua);
     // Add other languages here

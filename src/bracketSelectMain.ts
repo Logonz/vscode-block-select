@@ -8,7 +8,7 @@ import Parser from "tree-sitter";
 import { TreeSitterUtil } from "./treeSitterUtil"; // Import the Tree-sitter utility
 
 // Handlers
-import { BaseLanguageHandler } from "./languages/baseLanguageHandler"; // Import your language handlers
+import { BaseLanguageHandler, ReturnNode } from "./languages/baseLanguageHandler"; // Import your language handlers
 import { HtmlHandler } from "./languages/htmlHandler";
 import { JavascriptHandler } from "./languages/javascriptHander";
 import { LuaHandler } from "./languages/luaHandler";
@@ -128,10 +128,11 @@ function toVscodeSelection({ start, end }: { start: number; end: number }): vsco
   );
 }
 
-function isMatch(r1: SearchResult, r2: SearchResult) {
+function isMatch(r1: SearchResult | null, r2: SearchResult) {
   return r1 != null && r2 != null && bracketUtil.isMatch(r1.bracket, r2.bracket);
 }
 
+let lastExpandedNode: Parser.SyntaxNode | null = null;
 function expandSelection(includeBrackets: boolean) {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
@@ -158,10 +159,15 @@ function expandSelection(includeBrackets: boolean) {
 
   for (const selection of editor.selections) {
     console.log(`Debug: Processing selection: ${JSON.stringify(selection)}`);
+    let node: Parser.SyntaxNode;
+    // if (lastExpandedNode == null || selection.isEmpty) {
     const cursorPosition = selection.active;
     const offset = editor.document.offsetAt(cursorPosition);
-    const node = tree.rootNode.descendantForIndex(offset);
+    node = tree.rootNode.descendantForIndex(offset);
     console.log(`Debug: Found node at offset ${offset}: ${node.type}`);
+    // } else {
+    //   node = lastExpandedNode;
+    // }
 
     let targetNode = handler.selectNode(node, selection);
 
@@ -175,6 +181,10 @@ function expandSelection(includeBrackets: boolean) {
 
     if (targetNode) {
       console.log(`Debug: Creating new selection for node: ${targetNode.type}, start: ${targetNode.start}, end: ${targetNode.end}`);
+      // if (targetNode && targetNode.returnNode) {
+      //   console.log(`Debug: Setting last node to: ${targetNode.returnNode.type}`);
+      //   lastExpandedNode = targetNode.returnNode;
+      // }
 
       // TODO: Fix this for languages like Lua where selecting does not select the full "for" but "or" because we
       // TODO: Are reducing the selection to the node. This should probably only be a feature for brackets.
@@ -387,10 +397,7 @@ function handleFallbackSelection(includeBrackets: boolean, editor: vscode.TextEd
  * @param selection The current selection
  * @returns The new selection range or undefined
  */
-function fallbackBracketSelection(
-  includeBrackets: boolean,
-  selection: vscode.Selection
-): { start: number; end: number; type: string; openingBracketLength: number; closingBracketLength: number } | undefined {
+function fallbackBracketSelection(includeBrackets: boolean, selection: vscode.Selection): ReturnNode | undefined {
   const searchContext = getSearchContext(selection);
   let { text, backwardStarter, forwardStarter } = searchContext;
   if (backwardStarter < 0 || forwardStarter >= text.length) {
@@ -426,6 +433,7 @@ function fallbackBracketSelection(
     }
 
     return {
+      returnNode: null,
       start: selectionStart,
       end: selectionEnd,
       type: "bracket",

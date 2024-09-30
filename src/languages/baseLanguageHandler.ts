@@ -2,6 +2,15 @@ import Parser from "tree-sitter";
 import { TreeSitterUtil } from "../treeSitterUtil";
 import * as vscode from "vscode";
 
+export type ReturnNode = {
+  returnNode: Parser.SyntaxNode;
+  start: number;
+  end: number;
+  type: string;
+  openingBracketLength: number;
+  closingBracketLength: number;
+};
+
 export abstract class BaseLanguageHandler {
   protected parserUtil: TreeSitterUtil;
 
@@ -16,8 +25,5 @@ export abstract class BaseLanguageHandler {
   /**
    * Implement language-specific selection logic
    */
-  abstract selectNode(
-    node: Parser.SyntaxNode,
-    selection: vscode.Selection
-  ): { start: number; end: number; type: string; openingBracketLength: number; closingBracketLength: number } | null;
+  abstract selectNode(node: Parser.SyntaxNode, selection: vscode.Selection): ReturnNode | null;
 }

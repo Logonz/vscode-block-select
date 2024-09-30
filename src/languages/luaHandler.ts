@@ -1,5 +1,5 @@
 // src/languages/luaHandler.ts
-import { BaseLanguageHandler } from "./baseLanguageHandler";
+import { BaseLanguageHandler, ReturnNode } from "./baseLanguageHandler";
 import Parser from "tree-sitter";
 import * as vscode from "vscode";
 
@@ -84,10 +84,7 @@ export class LuaHandler extends BaseLanguageHandler {
    * @param node The Lua block node
    * @returns The start and end indices of the block
    */
-  selectNode(
-    node: Parser.SyntaxNode,
-    selection: vscode.Selection
-  ): { start: number; end: number; type: string; openingBracketLength: number; closingBracketLength: number } | null {
+  selectNode(node: Parser.SyntaxNode, selection: vscode.Selection): ReturnNode | null {
     while (node) {
       console.log("SELECT NODE TYPE", node.type);
       console.log("Start Index:", node.startIndex);
@@ -99,7 +96,6 @@ export class LuaHandler extends BaseLanguageHandler {
       console.log("Selection End:", selectionEndIndex);
 
       if (this.isBracketedNode(node) && ((node.startIndex <= selectionStartIndex && selectionEndIndex <= node.endIndex) || selection === undefined)) {
-        // Determine the type of block to identify brackets
         // Determine the type of block to identify brackets
         let openingBracket = "";
         let closingBracket = "";
@@ -176,7 +172,14 @@ export class LuaHandler extends BaseLanguageHandler {
         const openingLength = openingBracket.length;
         const closingLength = closingBracket.length;
 
-        return { start: node.startIndex, end: node.endIndex, type: node.type, openingBracketLength: openingLength, closingBracketLength: closingLength };
+        return {
+          returnNode: node,
+          start: node.startIndex,
+          end: node.endIndex,
+          type: node.type,
+          openingBracketLength: openingLength,
+          closingBracketLength: closingLength,
+        };
       }
       node = node.parent;
     }

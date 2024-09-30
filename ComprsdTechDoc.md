@@ -37,7 +37,7 @@
 2. **Expand (`Alt+A`)**: Selects entire bracketed structure (e.g., `<test>hej</test>`).
 3. **Undo (`Alt+Z`)**: Reverts to previous selection (`hej`).
 
-**Supported Languages**: HTML, JS, TS, JSX, Python, C++, Go, PHP, Ruby, Kotlin, Lua, Java, C#, C, Rust.
+**Supported Languages**: HTML, JS, TS, JSX, Python, C++, Go, PHP, Ruby, Lua, Java, C#, C, Rust.
 
 **Bracket Types**: `()`, `{}`, `[]`, `<tag></tag>`, `"`, `'`, `` ` ``, `/`
 

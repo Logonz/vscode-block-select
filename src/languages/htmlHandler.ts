@@ -1,5 +1,5 @@
 // src/languages/htmlHandler.ts
-import { BaseLanguageHandler } from "./baseLanguageHandler";
+import { BaseLanguageHandler, ReturnNode } from "./baseLanguageHandler";
 import Parser from "tree-sitter";
 import * as vscode from "vscode";
 
@@ -46,7 +46,7 @@ export class HtmlHandler extends BaseLanguageHandler {
   selectNode(
     node: Parser.SyntaxNode,
     selection: vscode.Selection
-  ): { start: number; end: number; type: string; openingBracketLength: number; closingBracketLength: number } | null {
+  ): ReturnNode | null {
     // TODO: HTML Handler is FUBAR, it worked way back before...
     // while (node) {
     //   console.log("SELECT NODE TYPE", node.type);
@@ -57,7 +57,7 @@ export class HtmlHandler extends BaseLanguageHandler {
     // }
     // return null;
     if (this.isBracketedNode(node)) {
-      return { start: node.startIndex, end: node.endIndex, type: node.type, openingBracketLength: 1, closingBracketLength: 1 };
+      return { returnNode: node, start: node.startIndex, end: node.endIndex, type: node.type, openingBracketLength: 1, closingBracketLength: 1 };
     }
     return null;
   }
