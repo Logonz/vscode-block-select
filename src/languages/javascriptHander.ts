@@ -2,6 +2,7 @@
 import { BaseLanguageHandler, ReturnNode } from "./baseLanguageHandler";
 import Parser from "tree-sitter";
 import * as vscode from "vscode";
+import { Selection } from "../selectionHistory";
 
 export class JavascriptHandler extends BaseLanguageHandler {
   isBracketedNode(node: Parser.SyntaxNode): boolean {
@@ -96,7 +97,7 @@ export class JavascriptHandler extends BaseLanguageHandler {
    */
   selectNode(
     node: Parser.SyntaxNode,
-    selection: vscode.Selection
+    selection: Selection
   ): ReturnNode | null {
     while (node) {
       console.log("SELECT NODE TYPE", node.type);

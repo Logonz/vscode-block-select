@@ -1,82 +1,144 @@
-// src/languages/luaHandler.ts
+// src/languages/goHandler.ts
 import { BaseLanguageHandler, ReturnNode } from "./baseLanguageHandler";
 import Parser from "tree-sitter";
 import * as vscode from "vscode";
 import { Selection } from "../selectionHistory";
 
-export class LuaHandler extends BaseLanguageHandler {
+export class GoHandler extends BaseLanguageHandler {
   isBracketedNode(node: Parser.SyntaxNode): boolean {
     // const blockTypes = [
-    //   "if_statement",
-    //   "function_definition",
-    //   "for_statement",
-    //   "while_statement",
-    //   "repeat_statement",
-    //   "do_statement",
-    //   "else_clause",
-    //   "elseif_clause",
+    //   "jsx_element",
+    //   "jsx_self_closing_element",
     //   "string",
+    //   "parenthesized_expression",
+    //   "object",
+    //   "array",
+    //   "template_string",
+    //   "string_fragment",
+    //   "regex",
+    //   "if_statement",
     // ];
     let blockTypes = [
-      // Control Flow Constructs
-      "if_statement",
-      "elseif_clause",
-      "else_clause",
-      "for_generic_statement",
-      "for_numeric_statement",
-      "while_statement",
-      "repeat_statement",
-      "do_statement",
-      "goto_statement",
-      "break_statement",
-      "label_statement",
-
-      // Function Constructs
-      "function_definition",
-      "local_function_definition_statement",
-      "function_definition_statement",
-      "call",
-
-      // Return and Assignment Constructs
-      "return_statement",
-      "variable_assignment",
-      "local_variable_declaration",
-
-      // Declarations and Blocks
-      "block",
-      "chunk",
-
-      // Expressions
-      "expression",
-      "binary_expression",
-      "unary_expression",
-      "prefix_expression",
-      "vararg_expression",
-
-      // Function Calls and Arguments
-      "argument_list",
-
-      // Variables and Identifiers
-      "variable",
-      "variable_list",
-
-      // Literals
+      // Existing types
+      "jsx_element",
+      "jsx_self_closing_element",
+      "jsx_fragment",
+      "object", // I think is the type "word" object
+      "object_type", // TypeScript object types (e.g., { key: value })
+      "array", // I think is the type "word" array
+      "array_type", // TypeScript array types (e.g., string[])
+      "template_string",
       "string",
+      "string_fragment",
+      "regex",
+      "if_statement",
+
+      // Literal types
       "number",
-      "nil",
+      "boolean",
+      "null",
+      "undefined",
       "true",
       "false",
 
-      // Comments
-      "comment",
+      // Function constructs
+      "function_declaration", // Function declarations (e.g., function myFunction() {})
+      "function_expression", // Function expressions (e.g., function() {})
+      "arrow_function",
+      "generator_function",
+      "generator_function_declaration",
 
-      // Other Relevant Constructs
-      // Add any other constructs that are relevant to your selection logic
+      // Class and interface constructs
+      "class_declaration",
+      "class_body",
+      "interface_declaration",
+      "interface_body",
+
+      // Control flow constructs
+      "for_statement",
+      "for_in_statement",
+      "for_of_statement",
+      "while_statement",
+      "do_statement",
+      "switch_statement",
+      "case_clause",
+      "default_clause",
+      "try_statement",
+      "catch_clause",
+
+      "statement_block",
+
+      // Module and namespace constructs
+      "namespace_declaration",
+      "module_declaration",
+
+      // Class members and properties
+      "method_definition",
+      "property_signature",
+      "property_identifier",
+      "constructor_declaration",
+
+      // Decorators and annotations
+      "decorator",
+
+      // Enum constructs
+      "enum_declaration",
+      "enum_body",
+
+      // Other relevant constructs
+      "import_statement",
+      "export_statement",
+      "block",
+      "try_catch_statement",
+
+      // Expressions
+      "parenthesized_expression", // Parenthesized expressions (e.g., (a + b))
+      "ternary_expression", // Ternary expressions (e.g., a ? b : c)
+      "binary_expression", // Binary expressions (e.g., a + b)
+      "unary_expression", // Unary expressions (e.g., !a)
+      "prefix_expression", // Prefix expressions (e.g., ++a)
+      "postfix_expression", // Postfix expressions (e.g., a++)
+      "call_expression", // Function calls (e.g., myFunction())
+      "new_expression", // New expressions (e.g., new MyClass())
+      "member_expression", // Member expressions (e.g., obj.prop)
+      "subscript_expression", // Subscript expressions (e.g., arr[index])
+      "assignment_expression", // Assignment expressions (e.g., a = b)
+      "update_expression", // Update expressions (e.g., a++)
+      "sequence_expression", // Sequence expressions (e.g., a, b)
+      "spread_element", // Spread elements (e.g., ...arr)
+      "yield_expression", // Yield expressions (e.g., yield value)
+      "await_expression", // Await expressions (e.g., await promise)
+      "import_expression", // Import expressions (e.g., import('module'))
+      "export_expression", // Export expressions (e.g., export { a, b })
+      "non_null_expression", // Non-null expressions (e.g., value!)
+      "type_assertion", // Type assertions (e.g., <string>value)
+      "type_cast", // Type casts (e.g., value as string)
+
+      "arguments",
+      "parameters",
+      "required_parameter",
+      "formal_parameters",
+
+      "identifier", // e.g Variable names
+      "nested_type_identifier", // e.g. Type names
+      "type_identifier", // e.g. Type names
+      "predefined_type", // e.g. Types that are built-in
+      "union_type", // e.g. Type unions (e.g. string | number)
+      "intersection_type", // e.g. Type intersections (e.g. A & B)
+      "type_parameter", // e.g. Type parameters (e.g. T)
+      "type_parameters", // e.g. Type parameters (e.g. <T>)
+      "type_arguments", // e.g. Type arguments (e.g. <T>)
+      "type_alias_declaration", // e.g. Type aliases (e.g. type MyType = string)
+      // "type_annotation", // e.g. Type annotations (e.g. const x: number) // This should not be used as it will select too small of a block
+      "type_predicate", // e.g. Type predicates (e.g. x is string)
+      "type_query", // e.g. Type queries (e.g. typeof x)
+      "index_type_query", // e.g. Index type queries (e.g. keyof T)
     ];
     blockTypes = [
       ".",
       "{",
       "}",
+      "${",
       "[",
       "]",
       "(",
@@ -130,17 +192,19 @@ export class LuaHandler extends BaseLanguageHandler {
       '"',
       "'",
       "`",
+      "/>",
+      "</",
     ];
     return blockTypes.includes(node.type);
   }
 
   // getLanguageId(): string {
-  //   return "lua";
+  //   return "typescript";
   // }
 
   /**
    * Selects the entire block represented by the node.
-   * @param node The Lua block node
+   * @param node The Typescript block node
    * @returns The start and end indices of the block
    */
   selectNode(node: Parser.SyntaxNode, selection: Selection): ReturnNode | null {
@@ -154,59 +218,15 @@ export class LuaHandler extends BaseLanguageHandler {
     }
 
     const document = editor.document;
-    let selectionStartIndex = document.offsetAt(selection.start);
-    let selectionEndIndex = document.offsetAt(selection.end);
+    // Put back the opening and closing brackets lengtht that was removed last select
+    // It will be 0 most of the time except for when the selection is inside a block
+    const open = selection.node ? selection.node.openingBracketLength : 0;
+    const close = selection.node ? selection.node.closingBracketLength : 0;
+    let selectionStartIndex = document.offsetAt(selection.start) - open;
+    let selectionEndIndex = document.offsetAt(selection.end) + close;
 
-    console.log("[bracket-select] Initial Selection Start:", selectionStartIndex);
-    console.log("[bracket-select] Initial Selection End:", selectionEndIndex);
-
-    /**
-     * Helper function to determine if a node completely encompasses the selection.
-     */
-    // const nodeContainsSelection = (node: Parser.SyntaxNode, helper: string): boolean => {
-    //   const result = node.startIndex < selectionStartIndex || node.endIndex > selectionEndIndex;
-    //   console.log(
-    //     `[bracket-select] ${helper} - Node '${node.type}' contains selection: '${result}' - ${node.startIndex} < ${selectionStartIndex} || ${node.endIndex} > ${selectionEndIndex}`
-    //   );
-    //   return result;
-    // };
-
-    /**
-     * Recursive function to find the smallest node that contains the selection.
-     */
-    // const findSmallestContainingNode = (currentNode: Parser.SyntaxNode): Parser.SyntaxNode | null => {
-    //   console.log(`[bracket-select] Checking node: ${currentNode.type}`);
-
-    //   if (this.isBracketedNode(currentNode)) {
-    //     console.log(`[bracket-select] Node ${currentNode.type} is a bracketed node, skipping.`);
-    //     return null;
-    //   }
-
-    //   // Check if current node contains the selection
-    //   if (!nodeContainsSelection(currentNode, "checkCurrentNode")) {
-    //     console.log(`[bracket-select] Node ${currentNode.type} does not contain the selection.`);
-    //     return null;
-    //   }
-
-    //   // TODO: I removed this code because if a parent node has children we want to just select all childrens
-    //   // Iterate through children to find a smaller containing node
-    //   // for (const child of currentNode.children) {
-    //   //   if (this.isBracketedNode(child)) {
-    //   //     continue;
-    //   //   }
-    //   //   if (nodeContainsSelection(child, "checkChildNode")) {
-    //   //     console.log(`[bracket-select] Child node ${child.type} contains selection, recursing.`);
-    //   //     const found = findSmallestContainingNode(child);
-    //   //     if (found) {
-    //   //       return found;
-    //   //     }
-    //   //   }
-    //   // }
-
-    //   // If no child contains the selection, current node is the smallest containing node
-    //   console.log(`[bracket-select] Current node ${currentNode.type} is the smallest containing node.`);
-    //   return currentNode;
-    // };
+    console.log("[bracket-select] Initial Selection Start:", selectionStartIndex, open);
+    console.log("[bracket-select] Initial Selection End:", selectionEndIndex, close);
 
     /**
      * Function to attempt expanding the selection by including adjacent siblings.
@@ -222,7 +242,6 @@ export class LuaHandler extends BaseLanguageHandler {
       let expansionNode: Parser.SyntaxNode | null = null;
 
       // Attempt to include previous siblings if no expansion found yet
-      // if (!foundExpansion || foundExpansion) {
       let sibling = currentNode.previousSibling;
       while (sibling) {
         console.log(`[bracket-select] Checking previous sibling: ${sibling.type}`);
@@ -247,10 +266,8 @@ export class LuaHandler extends BaseLanguageHandler {
 
         sibling = sibling.previousSibling;
       }
-      // }
 
       // Attempt to include next siblings
-      // if (!foundExpansion) {
       sibling = currentNode.nextSibling;
       while (sibling) {
         console.log(`[bracket-select] Checking next sibling: ${sibling.type}`);
@@ -275,7 +292,6 @@ export class LuaHandler extends BaseLanguageHandler {
 
         sibling = sibling.nextSibling;
       }
-      // }
 
       if (foundExpansion && expansionNode) {
         return { newStart: expandedStart, newEnd: expandedEnd, node: expansionNode };
@@ -294,16 +310,12 @@ export class LuaHandler extends BaseLanguageHandler {
 
     while (expanded) {
       console.log("[bracket-select] Attempting to find the smallest containing node.");
-      // const smallestNode = findSmallestContainingNode(node);
+      if (node.type === "program") {
+        console.log("[bracket-select] Program node reached. Exiting loop.");
+        break;
+      }
 
-      // if (!smallestNode) {
-      //   console.log("[bracket-select] No containing node found. Expanding into the parent node.");
-      //   node = node.parent;
-      //   continue; // Skip the rest of the loop and try again with the parent node
-      //   // break;
-      // }
-
-      if (node && !this.isBracketedNode(node) && node.type  !== "program") {
+      if (node && !this.isBracketedNode(node)) {
         console.log("[bracket-select] Smallest Containing Node:", node.type);
         console.log("[bracket-select] Node Start Index:", node.startIndex);
         console.log("[bracket-select] Node End Index:", node.endIndex);
@@ -341,10 +353,6 @@ export class LuaHandler extends BaseLanguageHandler {
           expanded = false; // Exit the loop if no further expansion is possible
         }
       }
-      if (node.type === "program") {
-        console.log("[bracket-select] Program node reached. Exiting loop.");
-        break;
-      }
     }
 
     // Placeholder for opening and closing brackets.
@@ -352,25 +360,27 @@ export class LuaHandler extends BaseLanguageHandler {
     let openingBracket = "";
     let closingBracket = "";
 
-    // Future-proof: Define specific brackets based on node types if needed.
-    // Example:
-    // const bracketMap: { [key: string]: { open: string; close: string } } = {
-    //   "object": { open: "{", close: "}" },
-    //   "array": { open: "[", close: "]" },
-    //   "arguments": { open: "(", close: ")" },
-    //   "parameter": { open: "(", close: ")" },
+    const bracketList: { open: string; close: string }[] = [
+      { open: "{", close: "}" },
+      { open: "[", close: "]" },
+      { open: "(", close: ")" },
+      { open: "<", close: "/>" },
+      { open: "<", close: ">" },
+      { open: '"', close: '"' },
+      { open: "'", close: "'" },
+      { open: "`", close: "`" },
 
-    //   // Add more mappings as needed
-    // };
-
-    // if (bracketMap[node.type]) {
-    //   openingBracket = bracketMap[node.type].open;
-    //   closingBracket = bracketMap[node.type].close;
-    // }
-
-    // Validate the presence of brackets in the node's text.
-    // Since brackets are currently empty, this section is effectively skipped.
-    // It's structured for future use when brackets are defined.
+      // Add more mappings as needed
+    ];
+    const newText = document.getText(new vscode.Range(editor.document.positionAt(currentStart), editor.document.positionAt(currentEnd)));
+    console.log("Current text:", newText);
+    for (const bracket of bracketList) {
+      if (newText.startsWith(bracket.open) && newText.endsWith(bracket.close)) {
+        openingBracket = bracket.open;
+        closingBracket = bracket.close;
+        break;
+      }
+    }
 
     // Calculate the lengths of the brackets.
     const openingLength = openingBracket.length;
@@ -385,7 +395,7 @@ export class LuaHandler extends BaseLanguageHandler {
       returnNode: returnNode,
       start: currentStart,
       end: currentEnd,
-      type: "expanded_selection", // You can adjust this type as needed
+      type: returnNode.type,
       openingBracketLength: openingLength,
       closingBracketLength: closingLength,
     };

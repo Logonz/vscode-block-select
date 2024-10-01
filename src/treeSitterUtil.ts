@@ -34,6 +34,7 @@ export class TreeSitterUtil {
     this.languageMap.set("javascript", JavaScript);
     this.languageMap.set("typescript", typescript.typescript);
     this.languageMap.set("tsx", typescript.tsx);
+    this.languageMap.set("typescriptreact", typescript.tsx);
     this.languageMap.set("python", Python);
     this.languageMap.set("cpp", Cpp);
     this.languageMap.set("go", Go);
@@ -76,52 +77,7 @@ export class TreeSitterUtil {
   parse(text: string): Parser.Tree {
     return this.parser.parse(text);
   }
-
-  /**
-   * Finds the smallest enclosing syntax node that represents a bracketed expression.
-   * @param tree The syntax tree
-   * @param position The offset position in the text
-   * @returns The enclosing syntax node or null
-   */
-  // findEnclosingBracketedNode(tree: Parser.Tree, position: number): Parser.SyntaxNode | null {
-  //   let node = tree.rootNode.descendantForIndex(position);
-  //   while (node) {
-  //     console.log(`[findEnclosingBracketedNode] Checking node type: ${node.type}`);
-  //     if (this.isBracketedNode(node, this.getLanguageId(tree))) {
-  //       console.log(`[findEnclosingBracketedNode] Found bracketed node: ${node.type} (${node.startIndex}, ${node.endIndex})`);
-  //       return node;
-  //     }
-  //     node = node.parent;
-  //   }
-  //   return null;
-  // }
-
-  /**
-   * Determines if a Tree-sitter node represents a bracketed expression.
-   * Adjust this function based on the grammar's node types.
-   * @param node The Tree-sitter node
-   * @param languageId The language ID
-   * @returns True if it's a bracketed node, false otherwise
-   */
-  // isBracketedNode(node: Parser.SyntaxNode, languageId: string): boolean {
-  //   switch (languageId) {
-  //     case "html":
-  //       return node.type === "element" || node.type === "self_closing_element" || node.type === "text";
-  //     case "javascript":
-  //     case "typescript":
-  //     case "tsx":
-  //       return node.type === "jsx_element" || node.type === "jsx_self_closing_element" || node.type === "string";
-  //     case "python":
-  //       return node.type === "parenthesized_expression" || node.type === "block" || node.type === "string";
-  //     case "php":
-  //       return node.type === "element" || node.type === "self_closing_element" || node.type === "text";
-  //     // Add additional languages if necessary
-  //     case "lua":
-  //       return node.type === "string"; // Add Lua's string node
-  //     default:
-  //       return false;
-  //   }
-  // }
+  
   /**
    * Retrieves the language ID from the syntax tree.
    * @param tree The syntax tree

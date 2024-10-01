@@ -2,6 +2,7 @@
 import { BaseLanguageHandler, ReturnNode } from "./baseLanguageHandler";
 import Parser from "tree-sitter";
 import * as vscode from "vscode";
+import { Selection } from "../selectionHistory";
 
 export class TypescriptHandler extends BaseLanguageHandler {
   isBracketedNode(node: Parser.SyntaxNode): boolean {
@@ -137,6 +138,7 @@ export class TypescriptHandler extends BaseLanguageHandler {
       ".",
       "{",
       "}",
+      "${",
       "[",
       "]",
       "(",
@@ -189,7 +191,10 @@ export class TypescriptHandler extends BaseLanguageHandler {
       ";",
       '"',
       "'",
-    ]
+      "`",
+      "/>",
+      "</",
+    ];
     return blockTypes.includes(node.type);
   }
 
@@ -202,7 +207,7 @@ export class TypescriptHandler extends BaseLanguageHandler {
    * @param node The Typescript block node
    * @returns The start and end indices of the block
    */
-  selectNode(node: Parser.SyntaxNode, selection: vscode.Selection): ReturnNode | null {
+  selectNode(node: Parser.SyntaxNode, selection: Selection): ReturnNode | null {
     console.log("[bracket-select] -----------------------");
     console.log(`[bracket-select] Root type: ${node.type}`);
 
@@ -213,59 +218,15 @@ export class TypescriptHandler extends BaseLanguageHandler {
     }
 
     const document = editor.document;
-    let selectionStartIndex = document.offsetAt(selection.start);
-    let selectionEndIndex = document.offsetAt(selection.end);
+    // Put back the opening and closing brackets lengtht that was removed last select
+    // It will be 0 most of the time except for when the selection is inside a block
+    const open = selection.node ? selection.node.openingBracketLength : 0;
+    const close = selection.node ? selection.node.closingBracketLength : 0;
+    let selectionStartIndex = document.offsetAt(selection.start) - open;
+    let selectionEndIndex = document.offsetAt(selection.end) + close;
 
-    console.log("[bracket-select] Initial Selection Start:", selectionStartIndex);
-    console.log("[bracket-select] Initial Selection End:", selectionEndIndex);
-
-    /**
-     * Helper function to determine if a node completely encompasses the selection.
-     */
-    const nodeContainsSelection = (node: Parser.SyntaxNode, helper: string): boolean => {
-      const result = node.startIndex < selectionStartIndex || node.endIndex > selectionEndIndex;
-      console.log(
-        `[bracket-select] ${helper} - Node '${node.type}' contains selection: '${result}' - ${node.startIndex} < ${selectionStartIndex} || ${node.endIndex} > ${selectionEndIndex}`
-      );
-      return result;
-    };
-
-    /**
-     * Recursive function to find the smallest node that contains the selection.
-     */
-    const findSmallestContainingNode = (currentNode: Parser.SyntaxNode): Parser.SyntaxNode | null => {
-      console.log(`[bracket-select] Checking node: ${currentNode.type}`);
-
-      if (this.isBracketedNode(currentNode)) {
-        console.log(`[bracket-select] Node ${currentNode.type} is a bracketed node, skipping.`);
-        return null;
-      }
-
-      // Check if current node contains the selection
-      if (!nodeContainsSelection(currentNode, "checkCurrentNode")) {
-        console.log(`[bracket-select] Node ${currentNode.type} does not contain the selection.`);
-        return null;
-      }
-
-      // TODO: I removed this code because if a parent node has children we want to just select all childrens
-      // Iterate through children to find a smaller containing node
-      // for (const child of currentNode.children) {
-      //   if (this.isBracketedNode(child)) {
-      //     continue;
-      //   }
-      //   if (nodeContainsSelection(child, "checkChildNode")) {
-      //     console.log(`[bracket-select] Child node ${child.type} contains selection, recursing.`);
-      //     const found = findSmallestContainingNode(child);
-      //     if (found) {
-      //       return found;
-      //     }
-      //   }
-      // }
-
-      // If no child contains the selection, current node is the smallest containing node
-      console.log(`[bracket-select] Current node ${currentNode.type} is the smallest containing node.`);
-      return currentNode;
-    };
+    console.log("[bracket-select] Initial Selection Start:", selectionStartIndex, open);
+    console.log("[bracket-select] Initial Selection End:", selectionEndIndex, close);
 
     /**
      * Function to attempt expanding the selection by including adjacent siblings.
@@ -280,8 +241,34 @@ export class TypescriptHandler extends BaseLanguageHandler {
       let foundExpansion = false;
       let expansionNode: Parser.SyntaxNode | null = null;
 
+      // Attempt to include previous siblings if no expansion found yet
+      let sibling = currentNode.previousSibling;
+      while (sibling) {
+        console.log(`[bracket-select] Checking previous sibling: ${sibling.type}`);
+        if (sibling.endIndex < currentStart || sibling.startIndex > currentEnd || this.isBracketedNode(sibling)) {
+          // Sibling is outside the current selection range; skip
+          sibling = sibling.previousSibling;
+          continue;
+        }
+
+        // Expand the selection to include this sibling
+        const newStart = Math.min(expandedStart, sibling.startIndex);
+        const newEnd = Math.max(expandedEnd, sibling.endIndex);
+
+        if (newStart < expandedStart || newEnd > expandedEnd) {
+          console.log(`[bracket-select] Expanding selection to include previous sibling: ${sibling.type}`);
+          expandedStart = newStart;
+          expandedEnd = newEnd;
+          foundExpansion = true;
+          expansionNode = sibling;
+          break; // Include one sibling at a time
+        }
+
+        sibling = sibling.previousSibling;
+      }
+
       // Attempt to include next siblings
-      let sibling = currentNode.nextSibling;
+      sibling = currentNode.nextSibling;
       while (sibling) {
         console.log(`[bracket-select] Checking next sibling: ${sibling.type}`);
         if (sibling.endIndex < currentStart || sibling.startIndex > currentEnd || this.isBracketedNode(sibling)) {
@@ -306,34 +293,6 @@ export class TypescriptHandler extends BaseLanguageHandler {
         sibling = sibling.nextSibling;
       }
 
-      // Attempt to include previous siblings if no expansion found yet
-      if (!foundExpansion || foundExpansion) {
-        sibling = currentNode.previousSibling;
-        while (sibling) {
-          console.log(`[bracket-select] Checking previous sibling: ${sibling.type}`);
-          if (sibling.endIndex < currentStart || sibling.startIndex > currentEnd || this.isBracketedNode(sibling)) {
-            // Sibling is outside the current selection range; skip
-            sibling = sibling.previousSibling;
-            continue;
-          }
-
-          // Expand the selection to include this sibling
-          const newStart = Math.min(expandedStart, sibling.startIndex);
-          const newEnd = Math.max(expandedEnd, sibling.endIndex);
-
-          if (newStart < expandedStart || newEnd > expandedEnd) {
-            console.log(`[bracket-select] Expanding selection to include previous sibling: ${sibling.type}`);
-            expandedStart = newStart;
-            expandedEnd = newEnd;
-            foundExpansion = true;
-            expansionNode = sibling;
-            break; // Include one sibling at a time
-          }
-
-          sibling = sibling.previousSibling;
-        }
-      }
-
       if (foundExpansion && expansionNode) {
         return { newStart: expandedStart, newEnd: expandedEnd, node: expansionNode };
       }
@@ -345,6 +304,7 @@ export class TypescriptHandler extends BaseLanguageHandler {
      * Main loop to iteratively expand the selection.
      */
     let expanded = true;
+    let returnNode = node;
     let currentStart = selectionStartIndex;
     let currentEnd = selectionEndIndex;
 
@@ -354,42 +314,44 @@ export class TypescriptHandler extends BaseLanguageHandler {
         console.log("[bracket-select] Program node reached. Exiting loop.");
         break;
       }
-      const smallestNode = findSmallestContainingNode(node);
 
-      if (!smallestNode) {
-        console.log("[bracket-select] No containing node found. Expanding into the parent node.");
-        node = node.parent;
-        continue; // Skip the rest of the loop and try again with the parent node
-        // break;
-      }
+      if (node && !this.isBracketedNode(node)) {
+        console.log("[bracket-select] Smallest Containing Node:", node.type);
+        console.log("[bracket-select] Node Start Index:", node.startIndex);
+        console.log("[bracket-select] Node End Index:", node.endIndex);
 
-      console.log("[bracket-select] Smallest Containing Node:", smallestNode.type);
-      console.log("[bracket-select] Node Start Index:", smallestNode.startIndex);
-      console.log("[bracket-select] Node End Index:", smallestNode.endIndex);
+        // Update the selection to the smallest containing node
+        const newStart = Math.min(currentStart, node.startIndex);
+        const newEnd = Math.max(currentEnd, node.endIndex);
 
-      // Update the selection to the smallest containing node
-      const newStart = Math.min(currentStart, smallestNode.startIndex);
-      const newEnd = Math.max(currentEnd, smallestNode.endIndex);
-
-      if (newStart < currentStart || newEnd > currentEnd) {
-        console.log("[bracket-select] Expanding selection to the smallest containing node.");
-        currentStart = newStart;
-        currentEnd = newEnd;
-        break; // Exit the loop if the selection is expanded
-      } else {
-        console.log("[bracket-select] Selection cannot be expanded further with the smallest containing node.");
+        if (newStart < currentStart || newEnd > currentEnd) {
+          console.log("[bracket-select] Expanding selection to the smallest containing node.");
+          currentStart = newStart;
+          currentEnd = newEnd;
+          returnNode = node;
+          break; // Exit the loop if the selection is expanded
+        } else {
+          console.log("[bracket-select] Selection cannot be expanded further with the smallest containing node.");
+        }
       }
 
       // Attempt to expand the selection with adjacent siblings
-      const expansion = expandSelectionWithSiblings(smallestNode, currentStart, currentEnd);
+      const expansion = expandSelectionWithSiblings(node, currentStart, currentEnd);
       if (expansion) {
         console.log("[bracket-select] Selection expanded with sibling node:", expansion.node.type);
         currentStart = expansion.newStart;
         currentEnd = expansion.newEnd;
+        returnNode = expansion.node;
+        node = expansion.node;
         break; // Exit the loop if the selection is expanded
       } else {
         console.log("[bracket-select] No further expansion with siblings possible.");
-        // expanded = false; // Exit the loop if no further expansion is possible
+        if (this.isBracketedNode(node)) {
+          console.log("[bracket-select] Expanding into the parent node.");
+          node = node.parent;
+        } else {
+          expanded = false; // Exit the loop if no further expansion is possible
+        }
       }
     }
 
@@ -398,37 +360,42 @@ export class TypescriptHandler extends BaseLanguageHandler {
     let openingBracket = "";
     let closingBracket = "";
 
-    // Future-proof: Define specific brackets based on node types if needed.
-    // Example:
-    // const bracketMap: { [key: string]: { open: string; close: string } } = {
-    //   "object": { open: "{", close: "}" },
-    //   "array": { open: "[", close: "]" },
-    //   // Add more mappings as needed
-    // };
+    const bracketList: { open: string; close: string }[] = [
+      { open: "{", close: "}" },
+      { open: "[", close: "]" },
+      { open: "(", close: ")" },
+      { open: "<", close: "/>" },
+      { open: "<", close: ">" },
+      { open: '"', close: '"' },
+      { open: "'", close: "'" },
+      { open: "`", close: "`" },
 
-    // if (bracketMap[smallestNode.type]) {
-    //   openingBracket = bracketMap[smallestNode.type].open;
-    //   closingBracket = bracketMap[smallestNode.type].close;
-    // }
-
-    // Validate the presence of brackets in the node's text.
-    // Since brackets are currently empty, this section is effectively skipped.
-    // It's structured for future use when brackets are defined.
+      // Add more mappings as needed
+    ];
+    const newText = document.getText(new vscode.Range(editor.document.positionAt(currentStart), editor.document.positionAt(currentEnd)));
+    console.log("Current text:", newText);
+    for (const bracket of bracketList) {
+      if (newText.startsWith(bracket.open) && newText.endsWith(bracket.close)) {
+        openingBracket = bracket.open;
+        closingBracket = bracket.close;
+        break;
+      }
+    }
 
     // Calculate the lengths of the brackets.
     const openingLength = openingBracket.length;
     const closingLength = closingBracket.length;
 
-    console.log("[bracket-select] Final Node Type:", node.type);
+    console.log(`[bracket-select] Final Node Type: ${node.type} ReturnNode: ${returnNode.type}`);
     console.log("[bracket-select] Final Selection Start:", currentStart);
     console.log("[bracket-select] Final Selection End:", currentEnd);
     console.log("[bracket-select] Opening Bracket:", openingBracket, "Closing Bracket:", closingBracket);
 
     return {
-      returnNode: node,
+      returnNode: returnNode,
       start: currentStart,
       end: currentEnd,
-      type: "expanded_selection", // You can adjust this type as needed
+      type: returnNode.type,
       openingBracketLength: openingLength,
       closingBracketLength: closingLength,
     };

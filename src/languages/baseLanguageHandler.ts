@@ -1,6 +1,7 @@
 import Parser from "tree-sitter";
 import { TreeSitterUtil } from "../treeSitterUtil";
 import * as vscode from "vscode";
+import { Selection } from "../selectionHistory";
 
 export type ReturnNode = {
   returnNode: Parser.SyntaxNode;
@@ -25,5 +26,5 @@ export abstract class BaseLanguageHandler {
   /**
    * Implement language-specific selection logic
    */
-  abstract selectNode(node: Parser.SyntaxNode, selection: vscode.Selection): ReturnNode | null;
+  abstract selectNode(node: Parser.SyntaxNode, selection: Selection): ReturnNode | null;
 }

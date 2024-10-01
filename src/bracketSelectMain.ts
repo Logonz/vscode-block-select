@@ -9,6 +9,7 @@ import { TreeSitterUtil } from "./treeSitterUtil"; // Import the Tree-sitter uti
 
 // Handlers
 import { BaseLanguageHandler, ReturnNode } from "./languages/baseLanguageHandler"; // Import your language handlers
+import { GoHandler } from "./languages/goHandler";
 import { HtmlHandler } from "./languages/htmlHandler";
 import { JavascriptHandler } from "./languages/javascriptHander";
 import { LuaHandler } from "./languages/luaHandler";
@@ -17,7 +18,7 @@ import { PythonHandler } from "./languages/pythonHandler";
 import { TsxHandler } from "./languages/tsxHandler";
 import { TypescriptHandler } from "./languages/typescriptHandler";
 
-const treeSitterUtil = new TreeSitterUtil();
+export const treeSitterUtil = new TreeSitterUtil();
 
 // Initialize the languageHandlers map
 const languageHandlers: Map<string, BaseLanguageHandler> = new Map();
@@ -26,10 +27,11 @@ const languageHandlers: Map<string, BaseLanguageHandler> = new Map();
 // languageHandlers.set("html", new HtmlHandler(treeSitterUtil));
 languageHandlers.set("javascript", new JavascriptHandler(treeSitterUtil));
 languageHandlers.set("typescript", new TypescriptHandler(treeSitterUtil));
-languageHandlers.set("tsx", new TsxHandler(treeSitterUtil));
+languageHandlers.set("typescriptreact", new TypescriptHandler(treeSitterUtil));
 languageHandlers.set("python", new PythonHandler(treeSitterUtil));
 languageHandlers.set("php", new PhpHandler(treeSitterUtil));
 languageHandlers.set("lua", new LuaHandler(treeSitterUtil));
+languageHandlers.set("go", new GoHandler(treeSitterUtil));
 // Register other handlers similarly, e.g., languageHandlers.set("javascript", new JavaScriptHandler(treeSitterUtil));
 
 class SearchResult {
@@ -133,7 +135,7 @@ function isMatch(r1: SearchResult | null, r2: SearchResult) {
 }
 
 let lastExpandedNode: Parser.SyntaxNode | null = null;
-function expandSelection(includeBrackets: boolean) {
+export function expandSelection(includeBrackets: boolean) {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
     console.log("Debug: No active editor found");
@@ -155,34 +157,40 @@ function expandSelection(includeBrackets: boolean) {
     return;
   }
 
-  const newSelections: vscode.Selection[] = [];
+  if (history.editorSelections.length === 0) {
+    history.editorSelections.push(new history.Selection(editor.selections[0].anchor, editor.selections[0].active, undefined));
+  }
 
-  for (const selection of editor.selections) {
-    console.log(`Debug: Processing selection: ${JSON.stringify(selection)}`);
+  const newSelections: history.Selection[] = [];
+
+  for (const selection of history.editorSelections) {
+    console.log(`bracket-select: Processing selection: ${JSON.stringify(selection)}`);
     let node: Parser.SyntaxNode;
+    // cast selection to a Selection
+    console.log(`bracket-select: Selection: ${selection.node ? selection.node.type : 'null'}`);
     // if (lastExpandedNode == null || selection.isEmpty) {
     const cursorPosition = selection.active;
     const offset = editor.document.offsetAt(cursorPosition);
     node = tree.rootNode.descendantForIndex(offset);
-    console.log(`Debug: Found node at offset ${offset}: ${node.type}`);
+    console.log(`bracket-select: Found node at offset ${offset}: ${node.type}`);
     // } else {
     //   node = lastExpandedNode;
     // }
 
     let targetNode = handler.selectNode(node, selection);
 
-    console.log(`Debug: Handler selected node: ${targetNode ? targetNode.type : "null"}`);
+    console.log(`bracket-select: Handler selected node: ${targetNode ? targetNode.type : "null"}`);
 
     if (!targetNode && selection.isEmpty) {
-      console.log("Debug: Falling back to bracket-based selection");
+      console.log("bracket-select: Falling back to bracket-based selection");
       // Fallback to bracket-based selection if Tree-sitter doesn't find a node
       targetNode = fallbackBracketSelection(includeBrackets, selection);
     }
 
     if (targetNode) {
-      console.log(`Debug: Creating new selection for node: ${targetNode.type}, start: ${targetNode.start}, end: ${targetNode.end}`);
+      console.log(`bracket-select: Creating new selection for node: ${targetNode.type}, start: ${targetNode.start}, end: ${targetNode.end}`);
       // if (targetNode && targetNode.returnNode) {
-      //   console.log(`Debug: Setting last node to: ${targetNode.returnNode.type}`);
+      //   console.log(`bracket-select: Setting last node to: ${targetNode.returnNode.type}`);
       //   lastExpandedNode = targetNode.returnNode;
       // }
 
@@ -191,33 +199,34 @@ function expandSelection(includeBrackets: boolean) {
       // TODO: Idea is to do it within the selectNode, we might be able to extract how big the "brackets" are
 
       // TODO: 2 : We have the check that the selection is not smaller than previous selection
-      let newSelection: vscode.Selection;
+      let newSelection: history.Selection;
       if (includeBrackets) {
-        newSelection = new vscode.Selection(editor.document.positionAt(targetNode.start), editor.document.positionAt(targetNode.end));
+        newSelection = new history.Selection(editor.document.positionAt(targetNode.start), editor.document.positionAt(targetNode.end), targetNode);
       } else {
-        newSelection = new vscode.Selection(
+        newSelection = new history.Selection(
           editor.document.positionAt(targetNode.start + targetNode.openingBracketLength),
-          editor.document.positionAt(targetNode.end - targetNode.closingBracketLength)
+          editor.document.positionAt(targetNode.end - targetNode.closingBracketLength),
+          targetNode
         );
       }
 
       // Check if the new selection is the same as the old one
       if (newSelection.isEqual(selection)) {
-        console.log("Debug: New selection is the same as the old one, expanding selection to include brackets");
-        newSelection = new vscode.Selection(editor.document.positionAt(targetNode.start), editor.document.positionAt(targetNode.end));
+        console.log("bracket-select: New selection is the same as the old one, expanding selection to include brackets");
+        newSelection = new history.Selection(editor.document.positionAt(targetNode.start), editor.document.positionAt(targetNode.end), targetNode);
       }
       newSelections.push(newSelection);
     } else {
-      console.log("Debug: No target node found, keeping original selection");
-      newSelections.push(selection);
+      console.log("bracket-select: No target node found, keeping original selection");
+      newSelections.push(new history.Selection(selection.anchor, selection.active, undefined));
     }
   }
 
   if (newSelections.length > 0) {
-    console.log(`Debug: Changing selections, count: ${newSelections.length}`);
+    console.log(`bracket-select: Changing selections, count: ${newSelections.length}`);
     history.changeSelections(newSelections);
   } else {
-    console.log("Debug: No new selections to apply");
+    console.log("bracket-select: No new selections to apply");
   }
 }
 
@@ -382,15 +391,20 @@ function handleFallbackSelection(includeBrackets: boolean, editor: vscode.TextEd
     if (Array.isArray(newSelect)) {
       return newSelect.map(toVscodeSelection);
     }
-    return newSelect ? toVscodeSelection(newSelect) : originSelection;
+    if (newSelect) {
+      const vscodeSelection = toVscodeSelection(newSelect);
+      return new history.Selection(vscodeSelection.anchor, vscodeSelection.active, undefined);
+    } else {
+      return new history.Selection(originSelection.anchor, originSelection.active, undefined);
+    }
+    // return newSelect ? toVscodeSelection(newSelect) : originSelection;
   });
 
   let haveChange = selections.findIndex((s, i) => !s.isEqual(originSelections[i])) >= 0;
   if (haveChange) {
-    history.changeSelections(selections);
+    history.changeSelections(selections as unknown as readonly history.Selection[]);
   }
 }
-
 /**
  * Performs fallback bracket-based selection.
  * @param includeBrackets Whether to include brackets in the selection
@@ -447,68 +461,3 @@ function fallbackBracketSelection(includeBrackets: boolean, selection: vscode.Se
   return;
 }
 
-/**
- * Main extension activation function.
- * @param context The extension context
- */
-export function activate(context: vscode.ExtensionContext) {
-  console.log("Extension 'block-select' is now active!");
-  // Initial load
-  console.log("Refreshing config...");
-  bracketUtil.refreshConfig();
-  console.log("Config refreshed");
-
-  // Listen for configuration changes
-  context.subscriptions.push(
-    vscode.workspace.onDidChangeConfiguration((event) => {
-      console.log("Configuration changed");
-      if (event.affectsConfiguration("block-select.bracketPairs") || event.affectsConfiguration("block-select.sameBracket")) {
-        console.log("Refreshing config due to relevant changes");
-        bracketUtil.refreshConfig();
-      }
-    })
-  );
-
-  // Register commands
-  console.log("Registering commands...");
-  context.subscriptions.push(
-    vscode.commands.registerCommand("block-select.select", function () {
-      console.log("Executing block-select.select command");
-      expandSelection(false);
-    }),
-    vscode.commands.registerCommand("block-select.undo-select", function () {
-      console.log("Executing block-select.undo-select command");
-      history.unDoSelect();
-    }),
-    vscode.commands.registerCommand("block-select.select-include", function () {
-      console.log("Executing block-select.select-include command");
-      expandSelection(true);
-    })
-  );
-  console.log("Commands registered");
-
-  // Listen for language changes to update Tree-sitter's parser language
-  vscode.window.onDidChangeActiveTextEditor((editor) => {
-    console.log("Active text editor changed");
-    if (editor) {
-      const languageId = editor.document.languageId;
-      console.log(`Setting Tree-sitter language to: ${languageId}`);
-      treeSitterUtil.setLanguage(languageId);
-    }
-  });
-
-  // Initialize Tree-sitter for the current active editor
-  const editor = vscode.window.activeTextEditor;
-  if (editor) {
-    const languageId = editor.document.languageId;
-    console.log(`Initializing Tree-sitter with language: ${languageId}`);
-    treeSitterUtil.setLanguage(languageId);
-  } else {
-    console.log("No active text editor on activation");
-  }
-
-  console.log("Extension activation completed");
-}
-
-// this method is called when your extension is deactivated
-export function deactivate() {}

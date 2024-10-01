@@ -17,7 +17,7 @@
     "Other"
   ],
   "activationEvents": [],
-  "main": "./dist/src/bracketSelectMain",
+  "main": "./dist/src/extension",
   "contributes": {
     "commands": [
       {
@@ -124,7 +124,7 @@
     "tree-sitter-html": "^0.23.0",
     "tree-sitter-java": "^0.23.2",
     "tree-sitter-javascript": "^0.23.0",
-    "tree-sitter-lua": "github:Logonz/tree-sitter-lua",
+    "tree-sitter-lua": "github:logonz/tree-sitter-lua",
     "tree-sitter-php": "^0.23.2",
     "tree-sitter-python": "^0.23.2",
     "tree-sitter-ruby": "^0.23.0",

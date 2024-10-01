@@ -2,6 +2,7 @@
 import { BaseLanguageHandler, ReturnNode } from "./baseLanguageHandler";
 import Parser from "tree-sitter";
 import * as vscode from "vscode";
+import { Selection } from "../selectionHistory";
 
 export class PhpHandler extends BaseLanguageHandler {
   isBracketedNode(node: Parser.SyntaxNode): boolean {
@@ -87,7 +88,7 @@ export class PhpHandler extends BaseLanguageHandler {
    * @param node The Php block node
    * @returns The start and end indices of the block
    */
-  selectNode(node: Parser.SyntaxNode, selection: vscode.Selection): ReturnNode | null {
+  selectNode(node: Parser.SyntaxNode, selection: Selection): ReturnNode | null {
     while (node) {
       console.log("SELECT NODE TYPE", node.type);
       if (this.isBracketedNode(node)) {
