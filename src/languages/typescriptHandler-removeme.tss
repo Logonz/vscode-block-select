@@ -1,0 +1,388 @@
+// src/languages/typescriptHandler.ts
+import { BaseLanguageHandler } from "./baseLanguageHandler";
+import Parser from "tree-sitter";
+import * as vscode from "vscode";
+
+export class TypescriptHandler extends BaseLanguageHandler {
+  isBracketedNode(node: Parser.SyntaxNode): boolean {
+    // const blockTypes = [
+    //   "jsx_element",
+    //   "jsx_self_closing_element",
+    //   "string",
+    //   "parenthesized_expression",
+    //   "object",
+    //   "array",
+    //   "template_string",
+    //   "string_fragment",
+    //   "regex",
+    //   "if_statement",
+    // ];
+    const blockTypes = [
+      // Existing types
+      "jsx_element",
+      "jsx_self_closing_element",
+      "jsx_fragment",
+      "object", // I think is the type "word" object
+      "object_type", // TypeScript object types (e.g., { key: value })
+      "array", // I think is the type "word" array
+      "array_type", // TypeScript array types (e.g., string[])
+      "template_string",
+      "string",
+      "string_fragment",
+      "regex",
+      "if_statement",
+
+      // Literal types
+      "number",
+      "boolean",
+      "null",
+      "undefined",
+      "true",
+      "false",
+      
+
+      // Function constructs
+      "function_declaration", // Function declarations (e.g., function myFunction() {})
+      "function_expression", // Function expressions (e.g., function() {})
+      "arrow_function",
+      "generator_function",
+      "generator_function_declaration",
+
+      // Class and interface constructs
+      "class_declaration",
+      "class_body",
+      "interface_declaration",
+      "interface_body",
+
+      // Control flow constructs
+      "for_statement",
+      "for_in_statement",
+      "for_of_statement",
+      "while_statement",
+      "do_statement",
+      "switch_statement",
+      "case_clause",
+      "default_clause",
+      "try_statement",
+      "catch_clause",
+
+      "statement_block",
+
+      // Module and namespace constructs
+      "namespace_declaration",
+      "module_declaration",
+
+      // Class members and properties
+      "method_definition",
+      "property_signature",
+      "property_identifier",
+      "constructor_declaration",
+
+      // Decorators and annotations
+      "decorator",
+
+      // Enum constructs
+      "enum_declaration",
+      "enum_body",
+
+      // Other relevant constructs
+      "import_statement",
+      "export_statement",
+      "block",
+      "try_catch_statement",
+
+      // Expressions
+      "parenthesized_expression", // Parenthesized expressions (e.g., (a + b))
+      "ternary_expression", // Ternary expressions (e.g., a ? b : c)
+      "binary_expression", // Binary expressions (e.g., a + b)
+      "unary_expression", // Unary expressions (e.g., !a)
+      "prefix_expression", // Prefix expressions (e.g., ++a)
+      "postfix_expression", // Postfix expressions (e.g., a++)
+      "call_expression", // Function calls (e.g., myFunction())
+      "new_expression", // New expressions (e.g., new MyClass())
+      "member_expression", // Member expressions (e.g., obj.prop)
+      "subscript_expression", // Subscript expressions (e.g., arr[index])
+      "assignment_expression", // Assignment expressions (e.g., a = b)
+      "update_expression", // Update expressions (e.g., a++)
+      "sequence_expression", // Sequence expressions (e.g., a, b)
+      "spread_element", // Spread elements (e.g., ...arr)
+      "yield_expression", // Yield expressions (e.g., yield value)
+      "await_expression", // Await expressions (e.g., await promise)
+      "import_expression", // Import expressions (e.g., import('module'))
+      "export_expression", // Export expressions (e.g., export { a, b })
+      "non_null_expression", // Non-null expressions (e.g., value!)
+      "type_assertion", // Type assertions (e.g., <string>value)
+      "type_cast", // Type casts (e.g., value as string)
+
+      "arguments",
+      "parameters",
+      "required_parameter",
+      "formal_parameters",
+
+      "identifier", // e.g Variable names
+      "nested_type_identifier", // e.g. Type names
+      "type_identifier", // e.g. Type names
+      "predefined_type", // e.g. Types that are built-in
+      "union_type", // e.g. Type unions (e.g. string | number)
+      "intersection_type", // e.g. Type intersections (e.g. A & B)
+      "type_parameter", // e.g. Type parameters (e.g. T)
+      "type_parameters", // e.g. Type parameters (e.g. <T>)
+      "type_arguments", // e.g. Type arguments (e.g. <T>)
+      "type_alias_declaration", // e.g. Type aliases (e.g. type MyType = string)
+      // "type_annotation", // e.g. Type annotations (e.g. const x: number) // This should not be used as it will select too small of a block
+      "type_predicate", // e.g. Type predicates (e.g. x is string)
+      "type_query", // e.g. Type queries (e.g. typeof x)
+      "index_type_query", // e.g. Index type queries (e.g. keyof T)
+    ];
+    return blockTypes.includes(node.type);
+  }
+
+  // getLanguageId(): string {
+  //   return "typescript";
+  // }
+
+  /**
+   * Selects the entire block represented by the node.
+   * @param node The Typescript block node
+   * @returns The start and end indices of the block
+   */
+  selectNode(
+    node: Parser.SyntaxNode,
+    selection: vscode.Selection
+  ): { start: number; end: number; type: string; openingBracketLength: number; closingBracketLength: number } | null {
+    const editor = vscode.window.activeTextEditor;
+    // const startNode = node;
+    const selectionStartIndex = editor.document.offsetAt(selection.start);
+    const selectionEndIndex = editor.document.offsetAt(selection.end);
+    const selectionText = editor.document.getText(selection);
+    console.log("Selection Start:", selectionStartIndex);
+    console.log("Selection End:", selectionEndIndex);
+    // console.log("startNode Start Index:", startNode.startIndex);
+    // console.log("startNode End Index:", startNode.endIndex);
+    while (node) {
+      console.log("SELECT NODE TYPE", node.type);
+      console.log("Start Index:", node.startIndex);
+      console.log("End Index:", node.endIndex);
+
+      if (this.isBracketedNode(node) && (node.startIndex <= selectionStartIndex || selectionEndIndex <= node.endIndex || selection === undefined)) {
+        // Determine the type of block to identify brackets
+        let openingBracket = "";
+        let closingBracket = "";
+
+        switch (node.type) {
+          // Literal types
+          case "number":
+          case "boolean":
+          case "null":
+          case "undefined":
+          case "true":
+          case "false":
+            openingBracket = "";
+            closingBracket = "";
+            break;
+
+          // String Literals (single-line or fragments)
+          // e.g., "hello", 'world'
+          case "string":
+          case "string_fragment":
+            openingBracket = '"';
+            closingBracket = '"';
+            break;
+
+          // Template Strings (multi-line strings or embedded expressions)
+          // e.g., `hello ${world}`
+          case "template_string":
+            openingBracket = "`";
+            closingBracket = "`";
+            break;
+
+          // Parenthesized Expressions (grouping expressions or function calls)
+          // e.g., (a + b), myFunction(a, b)
+          case "arguments": // Function or method arguments
+          case "parameters": // Function or method parameters
+          case "required_parameter": // Required parameters in TypeScript
+          case "formal_parameters": // Full parameter list in function declarations
+            openingBracket = "(";
+            closingBracket = ")";
+            break;
+
+          // Object Literals (collection of key-value pairs)
+          // e.g., { a: 1, b: 2 }
+          case "object":
+            openingBracket = "{";
+            closingBracket = "}";
+            break;
+
+          // Array Literals (collection of elements)
+          // e.g., [1, 2, 3]
+          case "array":
+            openingBracket = "[";
+            closingBracket = "]";
+            break;
+
+          case "array_type": // TypeScript array types, we want to select it all (e.g., string[])
+          case "object_type": // TypeScript object types we want to select it all (e.g., { key: value })
+            openingBracket = "";
+            closingBracket = "";
+            break;
+
+          // JSX Elements (React component elements)
+          // e.g., <div></div>, <input />, <>
+          case "jsx_element": // Standard JSX element with opening and closing tags
+          case "jsx_self_closing_element": // Self-closing JSX element
+          case "jsx_fragment": // Empty fragment in JSX (<>...</>)
+            openingBracket = "<";
+            closingBracket = node.type === "jsx_self_closing_element" ? "/>" : ">";
+            break;
+
+          // Regular Expressions
+          // e.g., /abc/, /[0-9]+/
+          case "regex":
+            openingBracket = "/";
+            closingBracket = "/";
+            break;
+
+          // Function Declarations and Expressions
+          // e.g., function() {}, () => {}, async function()
+          case "function_declaration":
+          case "function_expression":
+          case "arrow_function":
+          case "generator_function":
+            openingBracket = "function ";
+            closingBracket = "";
+            break;
+
+          // Class and Interface Declarations
+          // e.g., class MyClass { }, interface MyInterface { }
+          case "class_declaration":
+          case "interface_declaration":
+          case "interface_body": // Interface body with members
+          case "enum_declaration": // Enums e.g., enum MyEnum { }
+          case "enum_body": // Enum body with members
+          case "namespace_declaration": // Namespace e.g., namespace MyNamespace { }
+          case "module_declaration": // Modules in TypeScript e.g., module MyModule { }
+          case "block": // Code blocks wrapped in curly braces
+          case "statement_block": // Statement blocks (e.g., inside loops or conditionals)
+          case "if_statement": // if conditions
+          case "else_clause": // else condition
+          case "for_statement": // for loops
+          case "for_in_statement": // for-in loops
+          case "for_of_statement": // for-of loops
+          case "while_statement": // while loops
+          case "do_statement": // do-while loops
+          case "switch_statement": // switch cases
+          case "case_clause": // switch case clause
+          case "default_clause": // switch default clause
+          case "try_statement": // try-catch block
+          case "catch_clause": // catch block
+          case "finally_clause": // finally block
+            openingBracket = "{";
+            closingBracket = "}";
+            break;
+
+          // TypeScript Generics (type parameters and type arguments)
+          // e.g., <T>, <string>
+          case "type_parameter": // Type parameter in function/class/interface (e.g., T)
+          case "type_parameters": // Type parameters passed to generics (e.g., <T>)
+          case "type_arguments": // Type arguments passed to generics (e.g., <string>)
+            openingBracket = "<";
+            closingBracket = ">";
+            break;
+
+          // Identifiers (names of variables, properties, types, or classes)
+          // e.g., myVariable, MyType, MyClass
+          case "identifier": // Variable names
+          case "property_identifier": // Property identifiers (e.g., key in { key: value })
+          case "nested_type_identifier": // Nested type names (e.g., MyNamespace.MyType)
+          case "type_identifier": // Type identifiers in TypeScript
+          case "predefined_type": // Built-in types like `string`, `number`
+            openingBracket = "";
+            closingBracket = "";
+            break;
+
+          // Expressions (arithmetic, logical, or conditional expressions)
+          // e.g., a + b, !c, a ? b : c
+          case "parenthesized_expression": // Parenthesized expressions (e.g., (a + b))
+          case "ternary_expression": // Ternary expressions (e.g., a ? b : c)
+          case "binary_expression": // Binary expressions (e.g., a + b)
+          case "unary_expression": // Unary expressions (e.g., !a)
+          case "prefix_expression": // Prefix expressions (e.g., ++a)
+          case "postfix_expression": // Postfix expressions (e.g., a++)
+          case "call_expression": // Function calls (e.g., myFunction())
+          case "new_expression": // New expressions (e.g., new MyClass())
+          case "member_expression": // Member expressions (e.g., obj.prop)
+          case "subscript_expression": // Subscript expressions (e.g., arr[index])
+          case "assignment_expression": // Assignment expressions (e.g., a = b)
+          case "update_expression": // Update expressions (e.g., a++)
+          case "sequence_expression": // Sequence expressions (e.g., a, b)
+          case "spread_element": // Spread elements (e.g., ...arr)
+          case "yield_expression": // Yield expressions (e.g., yield value)
+          case "await_expression": // Await expressions (e.g., await promise)
+          case "import_expression": // Import expressions (e.g., import('module'))
+          case "export_expression": // Export expressions (e.g., export { a, b })
+          case "non_null_expression": // Non-null expressions (e.g., value!)
+          case "type_assertion": // Type assertions (e.g., <string>value)
+          case "type_cast": // Type casts (e.g., value as string)
+            openingBracket = "";
+            closingBracket = "";
+            break;
+
+          // Union and Intersection Types in TypeScript
+          // e.g., string | number (union), A & B (intersection)
+          case "union_type": // TypeScript union types (e.g., string | number)
+          case "intersection_type": // TypeScript intersection types (e.g., A & B)
+          case "type_alias_declaration": // Type Alias Declarations e.g., type MyType = string
+          case "type_predicate": // Type Predicates e.g., x is string
+          case "type_query": // Type Queries e.g., typeof x
+          case "index_type_query": // Index Type Queries e.g., keyof T
+            openingBracket = "";
+            closingBracket = "";
+            break;
+
+          // Default case: no brackets
+          default:
+            openingBracket = "";
+            closingBracket = "";
+        }
+
+        // Check that the opening and closing brackets are present in node.text
+        // We should be able to find it at the start and end of the node.text
+        if (!node.text.startsWith(openingBracket) && node.startIndex <= selectionStartIndex) {
+          console.log("Opening " + openingBracket + " bracket not found in node.text");
+          console.log("node.text", node.text.slice(0, 50));
+          openingBracket = "";
+        } else if (!selectionText.startsWith(openingBracket) && selectionStartIndex <= node.startIndex) {
+          console.log("Opening " + openingBracket + " bracket not found in selectionText");
+          console.log("selectionText", selectionText.slice(0, 50));
+          openingBracket = "";
+        }
+
+        if (!node.text.endsWith(closingBracket) && node.endIndex >= selectionEndIndex) {
+          console.log("Opening " + closingBracket + " bracket not found in node.text");
+          console.log("node.text", node.text.slice(0, 50));
+          closingBracket = "";
+        } else if (!selectionText.endsWith(closingBracket) && selectionEndIndex >= node.endIndex) {
+          console.log("Opening " + closingBracket + " bracket not found in selectionText");
+          console.log("selectionText", selectionText.slice(0, 50));
+          closingBracket = "";
+        }
+
+        const openingLength = openingBracket.length;
+        const closingLength = closingBracket.length;
+        console.log("Opening Bracket:", openingBracket, "Closing Bracket:", closingBracket);
+        console.log("Opening Length:", openingLength, "Closing Length:", closingLength);
+        console.log("Start:", Math.min(node.startIndex, selectionStartIndex), "End:", Math.max(node.endIndex, selectionEndIndex));
+        return {
+          start: Math.min(node.startIndex, selectionStartIndex),
+          end: Math.max(node.endIndex, selectionEndIndex),
+          type: node.type,
+          openingBracketLength: openingLength,
+          closingBracketLength: closingLength,
+        };
+      }
+      // TODO: We should probably look at including siblings if the parent is a very big node such as "program"
+      node = node.parent;
+    }
+    return null;
+  }
+}
